@@ -1,0 +1,21 @@
+{
+  "pollak": {
+    "account_id": "5c483044e1e4793912e08be4",
+    "access_key": "MDRiZGJmNDAtOTIxMi0zNDZlLWE5Y2YtMTE4NjAwNDI4ZjUzIDVjNDgzMDQ0ZTFlNDc5MzkxMmUwOGJlNCBVU0VSX0RFRkFVTFRfTkFNRQ",
+    "secret_key": "UnwjxtBBzsTzg6dNwNdhiHnk_VC-VPL2LHQla5cV6sg",
+    "base_api_call": "https://prod-api.zephyr4jiracloud.com/connect",
+    "jira_token": "4qGvmqftA8wepGZ6qfn774AC"
+  },
+  "dauda": {
+    "account_id": "5ca1bd44faab36165eb98bde",
+    "access_key": "MDRiZGJmNDAtOTIxMi0zNDZlLWE5Y2YtMTE4NjAwNDI4ZjUzIDVjYTFiZDQ0ZmFhYjM2MTY1ZWI5OGJkZSBVU0VSX0RFRkFVTFRfTkFNRQ",
+    "secret_key": "c6Diascr4HsKqO2HkvRxHk67H0Bj_0Q4J3v3xhuutao",
+    "jira_token": "4qGvmqftA8wepGZ6qfn774AC"
+  },
+  "hilovsky": {
+    "account_id": "60e5b64cd6ba9a00778b03d8",
+    "access_key": "MDRiZGJmNDAtOTIxMi0zNDZlLWE5Y2YtMTE4NjAwNDI4ZjUzIDYwZTViNjRjZDZiYTlhMDA3NzhiMDNkOCBVU0VSX0RFRkFVTFRfTkFNRQ",
+    "secret_key": "WLkcPsO1pd19eFvDYJQGWfNOUK-dv32B6QpL0oZyAsc",
+    "jira_token": "4qGvmqftA8wepGZ6qfn774AC"
+  }
+}
