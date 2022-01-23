@@ -22,6 +22,7 @@ export async function main() {
    }
 
    const unique = Array.from(new Set(crossids));
+   const cycleId = '47bcc20c-f3cc-4b14-b5cd-b915cb685719'
    while (i < unique.length) {
       let index = getAllIndexes(crossids, unique[i]);
       let obj = JSON.parse(data[index[0]]);

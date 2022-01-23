@@ -36,12 +36,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getFilesData = exports.execs = exports.updateStepResult = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.createCycle = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getFilesData = exports.execs = exports.updateStepResult = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var apicall = require('./apicall');
 var config = require('./config.json');
 var auth = require('./jwt-auth');
 var testFolder = '../cross-app/reports/jsons';
 var fs = require('fs');
+var readline = require('readline');
 function getTestIT(description) {
     var start_pos = 0;
     var start_pos1 = description.indexOf('|');
@@ -69,18 +70,113 @@ function getTestId(description) {
     }
 }
 exports.getTestId = getTestId;
-function createCycle() {
-    // console.log("Cycle not created because function is not implemented");
+function getIdOfVersion(version, projectId) {
+    if (version === void 0) { version = "2.0.5"; }
+    if (projectId === void 0) { projectId = 10000; }
+    return __awaiter(this, void 0, void 0, function () {
+        var versions, versionsJSON, id, err_1, i;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    id = -1;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, apicall.getJiraData("project/" + projectId + "/versions")];
+                case 2:
+                    versions = _a.sent();
+                    versionsJSON = JSON.parse(versions);
+                    return [3 /*break*/, 4];
+                case 3:
+                    err_1 = _a.sent();
+                    console.log("Versions call troubles!", err_1);
+                    return [3 /*break*/, 4];
+                case 4:
+                    for (i in versionsJSON) {
+                        if (versionsJSON[i].name === version) {
+                            id = versionsJSON[i].id;
+                            return [2 /*return*/, id];
+                        }
+                    }
+                    if (id === -1) {
+                        console.log('Version does not exist!');
+                    }
+                    return [2 /*return*/, id];
+            }
+        });
+    });
+}
+exports.getIdOfVersion = getIdOfVersion;
+function createCycle(branch, projectId) {
+    if (branch === void 0) { branch = "release/2.0.5"; }
+    if (projectId === void 0) { projectId = 10000; }
+    return __awaiter(this, void 0, void 0, function () {
+        var response, version, environment, cycleName, description, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    version = '';
+                    environment = '';
+                    cycleName = '';
+                    description = 'default description';
+                    if (branch.toLowerCase() == "development") {
+                        cycleName = 'DEVELOPMENT';
+                        environment = 'DEVELOPMENT';
+                        description = 'Tests was runned during development period!';
+                    }
+                    if (branch.toLowerCase().includes('release')) {
+                        cycleName = 'RELEASE';
+                        environment = 'TEST';
+                        description = 'Tests was runned during release period!';
+                        version = branch.split('/').pop();
+                        ;
+                    }
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, getIdOfVersion(version, projectId).then(function (versionID) {
+                            return __awaiter(this, void 0, void 0, function () {
+                                var body, data;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            body = {
+                                                "name": cycleName,
+                                                "environment": environment,
+                                                "description": description,
+                                                "versionId": versionID,
+                                                "projectId": projectId
+                                            };
+                                            return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/cycle', body)];
+                                        case 1:
+                                            response = _a.sent();
+                                            data = JSON.parse(response);
+                                            return [2 /*return*/, data.id];
+                                    }
+                                });
+                            });
+                        })];
+                case 2:
+                    _a.sent();
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    console.log("Continue as Ad hoc reporting, because an error occured when founding version:", error_1);
+                    return [2 /*return*/, response = -1];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
 }
 exports.createCycle = createCycle;
 function getIsseuId(jiraID) {
     return __awaiter(this, void 0, void 0, function () {
-        var issueIDJson, data, err_1;
+        var issueIDJson, data, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, apicall.getJiraData(jiraID)];
+                    return [4 /*yield*/, apicall.getJiraData("issue/" + jiraID)];
                 case 1:
                     issueIDJson = _a.sent();
                     data = JSON.parse(issueIDJson);
@@ -88,8 +184,8 @@ function getIsseuId(jiraID) {
                     data = data.toString();
                     return [2 /*return*/, data];
                 case 2:
-                    err_1 = _a.sent();
-                    console.log(err_1);
+                    err_2 = _a.sent();
+                    console.log(err_2);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
@@ -97,14 +193,15 @@ function getIsseuId(jiraID) {
     });
 }
 exports.getIsseuId = getIsseuId;
-function createExecution(jiraID) {
+function createExecution(jiraID, cycleId, versionId) {
     if (jiraID === void 0) { jiraID = "15580"; }
+    if (versionId === void 0) { versionId = -1; }
     return __awaiter(this, void 0, void 0, function () {
-        var body, data, json, err_2;
+        var body, data, json, err_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
+                    body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": cycleId, "versionId": versionId, "assigneeType": "currentUser" };
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
@@ -114,8 +211,8 @@ function createExecution(jiraID) {
                     json = JSON.parse(data);
                     return [2 /*return*/, json['execution']['id']];
                 case 3:
-                    err_2 = _a.sent();
-                    console.log(err_2);
+                    err_3 = _a.sent();
+                    console.log('Execution error>', err_3);
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
@@ -123,7 +220,6 @@ function createExecution(jiraID) {
     });
 }
 exports.createExecution = createExecution;
-// createExecution()
 function bulkEditExecs(execs, status, pending) {
     if (pending === void 0) { pending = false; }
     return __awaiter(this, void 0, void 0, function () {

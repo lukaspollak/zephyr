@@ -1,8 +1,12 @@
+import { JsonObjectExpression, StringMappingType } from "typescript";
+import { getJiraData } from "./apicall";
+
 const apicall = require('./apicall');
 const config = require('./config.json');
 const auth = require('./jwt-auth');
 const testFolder = '../cross-app/reports/jsons';
 const fs = require('fs');
+const readline = require('readline');
 
 export function getTestIT(description: String) {
    const start_pos = 0;
@@ -31,13 +35,73 @@ export function getTestId(description: String) {
    }
 }
 
-export function createCycle() {
-   // console.log("Cycle not created because function is not implemented");
+export async function getIdOfVersion(version: string = "2.0.5", projectId: number = 10000) {
+   let versions: string;
+   let versionsJSON: JSON;
+   let id: number = -1;
+   try {
+      versions = await apicall.getJiraData("project/" + projectId + "/versions");
+      versionsJSON = JSON.parse(versions);
+   } catch (err) {
+      console.log("Versions call troubles!", err);
+   }
+
+   for (let i in versionsJSON) {
+      if (versionsJSON[i].name === version) {
+         id = versionsJSON[i].id;
+         return id;
+      }
+   }
+
+   if (id === -1) {
+      console.log('Version does not exist!');
+   }
+   return id;
+}
+
+export async function createCycle(branch: string = "release/2.0.5", projectId: number = 10000) {
+   let response: any;
+   let version: string = '';
+   let environment: string = '';
+   let cycleName: string = '';
+   let description: string = 'default description';
+
+   if (branch.toLowerCase() == "development") {
+      cycleName = 'DEVELOPMENT';
+      environment = 'DEVELOPMENT';
+      description = 'Tests was runned during development period!';
+   }
+   if (branch.toLowerCase().includes('release')) {
+      cycleName = 'RELEASE';
+      environment = 'TEST';
+      description = 'Tests was runned during release period!';
+
+      version = branch.split('/').pop();;
+   }
+
+   try {
+      await getIdOfVersion(version, projectId).then(async function (versionID: number){
+         const body = {
+            "name": cycleName,
+            "environment": environment,
+            "description": description,
+            "versionId": versionID,
+            "projectId": projectId
+         };
+
+         response = await apicall.postData('/public/rest/api/1.0/cycle', body);
+         const data = JSON.parse(response);
+         return data.id;
+      })
+   } catch (error) {
+      console.log("Continue as Ad hoc reporting, because an error occured when founding version:", error);
+      return response = -1;
+   }
 }
 
 export async function getIsseuId(jiraID: string) {
    try {
-      let issueIDJson: any = await apicall.getJiraData(jiraID);
+      let issueIDJson: any = await apicall.getJiraData("issue/" + jiraID);
       let data = JSON.parse(issueIDJson);
       data = data.id;
       data = data.toString();
@@ -46,19 +110,18 @@ export async function getIsseuId(jiraID: string) {
       console.log(err);
    }
 }
-export async function createExecution(jiraID: string = "15580") {
-   const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
+
+export async function createExecution(jiraID: string = "15580", cycleId: string, versionId: number = -1) {
+   const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": cycleId, "versionId": versionId, "assigneeType": "currentUser" };
    try {
       const data = await apicall.postData('/public/rest/api/1.0/execution', body);
       const json = JSON.parse(data);
       return json['execution']['id'];
    } catch (err) {
-      console.log(err);
+      console.log('Execution error>', err);
    }
-
 }
 
-// createExecution()
 export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false) {
    let body: any;
    if (status == true && pending == false) {
@@ -93,7 +156,7 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
    if (selectedSteps.includes(step)) {
       const indexOfStep = selectedSteps.indexOf(step);
       id = selectedStepsIds[indexOfStep];
-      let stepId = stepResult.stepResults[indexOfStep]['stepId'];
+      const stepId = stepResult.stepResults[indexOfStep]['stepId'];
       stepResultId = stepResult.stepResults[indexOfStep]['id'];
 
       console.log("Issue id:", issueId);

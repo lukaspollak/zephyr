@@ -50,7 +50,7 @@ function main() {
             }
             return indexes;
         }
-        var _a, data, crossids, i, j, x, y, z, passedExecs, failedExecs, pendingExecs, unique, _loop_1;
+        var _a, data, crossids, i, j, x, y, z, passedExecs, failedExecs, pendingExecs, unique, cycleId, _loop_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, datas.getFilesData()];
@@ -65,6 +65,7 @@ function main() {
                     failedExecs = [''];
                     pendingExecs = [''];
                     unique = Array.from(new Set(crossids));
+                    cycleId = '47bcc20c-f3cc-4b14-b5cd-b915cb685719';
                     _loop_1 = function () {
                         var index, obj, crossId, issueId, err_1;
                         return __generator(this, function (_c) {
@@ -79,7 +80,7 @@ function main() {
                                     _c.label = 2;
                                 case 2:
                                     _c.trys.push([2, 4, , 5]);
-                                    return [4 /*yield*/, datas.createExecution(issueId).then(function (response) {
+                                    return [4 /*yield*/, datas.createExecution(issueId, cycleId).then(function (response) {
                                             return __awaiter(this, void 0, void 0, function () {
                                                 var res, count_pending_its, obj2, z_1, obj2, err_2;
                                                 return __generator(this, function (_a) {
