@@ -98,15 +98,14 @@ function main() {
                                                                     res = false;
                                                                 }
                                                             }
-                                                            if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 8];
+                                                            if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 7];
                                                             failedExecs[y] = response;
                                                             y = y + 1;
                                                             z_1 = 0;
                                                             _a.label = 1;
                                                         case 1:
-                                                            if (!(z_1 < index.length)) return [3 /*break*/, 7];
+                                                            if (!(z_1 < index.length)) return [3 /*break*/, 6];
                                                             obj2 = JSON.parse(data[index[z_1]]);
-                                                            if (!(obj2['passed'] == false)) return [3 /*break*/, 5];
                                                             _a.label = 2;
                                                         case 2:
                                                             _a.trys.push([2, 4, , 5]);
@@ -119,19 +118,16 @@ function main() {
                                                             console.error(err_2);
                                                             return [3 /*break*/, 5];
                                                         case 5:
-                                                            ;
-                                                            _a.label = 6;
-                                                        case 6:
                                                             z_1++;
                                                             return [3 /*break*/, 1];
-                                                        case 7: return [3 /*break*/, 9];
-                                                        case 8:
+                                                        case 6: return [3 /*break*/, 8];
+                                                        case 7:
                                                             if (res == true) {
                                                                 passedExecs[x] = response;
                                                                 x = x + 1;
                                                             }
-                                                            _a.label = 9;
-                                                        case 9:
+                                                            _a.label = 8;
+                                                        case 8:
                                                             if (count_pending_its == index.length) {
                                                                 pendingExecs[z] = response;
                                                                 z = z + 1;

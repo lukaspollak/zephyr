@@ -47,13 +47,11 @@ export async function main() {
                y = y + 1;
                for (let z = 0; z < index.length; z++) {
                   const obj2 = JSON.parse(data[index[z]]);
-                  if (obj2['passed'] == false) {
-                     try {
-                        await datas.updateStepResult(obj2, issueId, response);
-                     } catch (err) {
-                        console.error(err);
-                     }
-                  };
+                  try {
+                     await datas.updateStepResult(obj2, issueId, response);
+                  } catch (err) {
+                     console.error(err);
+                  }
                }
             } else if (res == true) {
                passedExecs[x] = response;
