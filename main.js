@@ -95,9 +95,10 @@ function main() {
                                                                 }
                                                                 if (obj2['pending'] == true) {
                                                                     count_pending_its = count_pending_its + 1;
+                                                                    res = false;
                                                                 }
                                                             }
-                                                            if (!(res == false)) return [3 /*break*/, 8];
+                                                            if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 8];
                                                             failedExecs[y] = response;
                                                             y = y + 1;
                                                             z_1 = 0;

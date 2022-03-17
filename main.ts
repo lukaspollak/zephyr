@@ -39,9 +39,10 @@ export async function main() {
                }
                if (obj2['pending'] == true) {
                   count_pending_its = count_pending_its + 1;
+                  res = false;
                }
             }
-            if (res == false) {
+            if (res == false && count_pending_its != index.length) {
                failedExecs[y] = response;
                y = y + 1;
                for (let z = 0; z < index.length; z++) {
