@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.createCycle = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.createCycle = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var apicall = require('./apicall');
 var config = require('./config.json');
 var auth = require('./jwt-auth');
@@ -149,6 +149,28 @@ function bulkEditExecs(execs, status, pending) {
     });
 }
 exports.bulkEditExecs = bulkEditExecs;
+function bulkEditSteps(exec, status) {
+    return __awaiter(this, void 0, void 0, function () {
+        var body, execs;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    execs = [exec];
+                    if (status == true) {
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
+                    }
+                    else if (status == false) {
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 2 };
+                    }
+                    return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/executions', body)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.bulkEditSteps = bulkEditSteps;
 function putStepResult(execId, issueId, stepResultId, resultOfTest, console_log) {
     if (console_log === void 0) { console_log = 'Passed.'; }
     return __awaiter(this, void 0, void 0, function () {

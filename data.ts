@@ -72,6 +72,17 @@ export async function bulkEditExecs(execs: Array<string>, status: boolean, pendi
    await apicall.postData('/public/rest/api/1.0/executions', body);
 }
 
+export async function bulkEditSteps(exec: string, status: boolean) {
+   let body: any;
+   const execs = [exec];
+   if (status == true) {
+      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
+   } else if (status == false) {
+      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 2 };
+   }
+   await apicall.postData('/public/rest/api/1.0/executions', body);
+}
+
 
 export async function putStepResult(execId: string, issueId: string, stepResultId: string, resultOfTest: string, console_log: string = 'Passed.') {
    const body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
