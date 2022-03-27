@@ -49,7 +49,8 @@ export async function main() {
                if (wip == false) {
                   failedExecs[y] = response;
                }
-               await datas.bulkEditExecs(response, true).then(async function () {
+            
+               await datas.bulkEditSteps(response, true).then(async function () {
                   y = y + 1;
                   for (let z = 0; z < index.length; z++) {
                      const obj2 = JSON.parse(data[index[z]]);

@@ -105,12 +105,13 @@ function main() {
                                                             if (wip == false) {
                                                                 failedExecs[y] = response;
                                                             }
-                                                            return [4 /*yield*/, datas.bulkEditExecs(response, true).then(function () {
+                                                            return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function (result) {
                                                                     return __awaiter(this, void 0, void 0, function () {
                                                                         var z_1, obj2, err_2;
                                                                         return __generator(this, function (_a) {
                                                                             switch (_a.label) {
                                                                                 case 0:
+                                                                                    console.log('update stepov sa', result);
                                                                                     y = y + 1;
                                                                                     z_1 = 0;
                                                                                     _a.label = 1;
