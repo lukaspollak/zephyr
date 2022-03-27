@@ -81,11 +81,12 @@ function main() {
                                     _c.trys.push([2, 4, , 5]);
                                     return [4 /*yield*/, datas.createExecution(issueId).then(function (response) {
                                             return __awaiter(this, void 0, void 0, function () {
-                                                var res, count_pending_its, obj2, z_1, obj2, err_2;
+                                                var res, wip, count_pending_its, obj2, z_1, obj2, err_2;
                                                 return __generator(this, function (_a) {
                                                     switch (_a.label) {
                                                         case 0:
                                                             res = true;
+                                                            wip = false;
                                                             count_pending_its = 0;
                                                             // let failStepId: string;
                                                             for (j = 0; j < index.length; j++) {
@@ -96,10 +97,13 @@ function main() {
                                                                 if (obj2['pending'] == true) {
                                                                     count_pending_its = count_pending_its + 1;
                                                                     res = false;
+                                                                    wip = true;
                                                                 }
                                                             }
                                                             if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 7];
-                                                            failedExecs[y] = response;
+                                                            if (wip == false) {
+                                                                failedExecs[y] = response;
+                                                            }
                                                             y = y + 1;
                                                             z_1 = 0;
                                                             _a.label = 1;
@@ -128,7 +132,7 @@ function main() {
                                                             }
                                                             _a.label = 8;
                                                         case 8:
-                                                            if (count_pending_its == index.length) {
+                                                            if (wip == true) {
                                                                 pendingExecs[z] = response;
                                                                 z = z + 1;
                                                             }

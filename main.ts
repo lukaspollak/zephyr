@@ -30,6 +30,7 @@ export async function main() {
       try {
          await datas.createExecution(issueId).then(async function (response: string) {
             let res = true;
+            let wip = false;
             let count_pending_its = 0;
             // let failStepId: string;
             for (j = 0; j < index.length; j++) {
@@ -40,10 +41,13 @@ export async function main() {
                if (obj2['pending'] == true) {
                   count_pending_its = count_pending_its + 1;
                   res = false;
+                  wip = true;
                }
             }
             if (res == false && count_pending_its != index.length) {
-               failedExecs[y] = response;
+               if (wip == false) {
+                  failedExecs[y] = response;
+               }
                y = y + 1;
                for (let z = 0; z < index.length; z++) {
                   const obj2 = JSON.parse(data[index[z]]);
@@ -57,7 +61,7 @@ export async function main() {
                passedExecs[x] = response;
                x = x + 1;
             }
-            if (count_pending_its == index.length) {
+            if (wip == true) {
                pendingExecs[z] = response;
                z = z + 1;
             }
