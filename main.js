@@ -81,13 +81,14 @@ function main() {
                                     _c.trys.push([2, 4, , 5]);
                                     return [4 /*yield*/, datas.createExecution(issueId).then(function (response) {
                                             return __awaiter(this, void 0, void 0, function () {
-                                                var res, wip, count_pending_its, obj2, z_1, obj2, err_2;
+                                                var res, wip, count_pending_its, count_failed_its, obj2;
                                                 return __generator(this, function (_a) {
                                                     switch (_a.label) {
                                                         case 0:
                                                             res = true;
                                                             wip = false;
                                                             count_pending_its = 0;
+                                                            count_failed_its = 0;
                                                             // let failStepId: string;
                                                             for (j = 0; j < index.length; j++) {
                                                                 obj2 = JSON.parse(data[index[j]]);
@@ -100,38 +101,55 @@ function main() {
                                                                     wip = true;
                                                                 }
                                                             }
-                                                            if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 7];
+                                                            if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 2];
                                                             if (wip == false) {
                                                                 failedExecs[y] = response;
                                                             }
-                                                            y = y + 1;
-                                                            z_1 = 0;
-                                                            _a.label = 1;
+                                                            return [4 /*yield*/, datas.bulkEditExecs(response, true).then(function () {
+                                                                    return __awaiter(this, void 0, void 0, function () {
+                                                                        var z_1, obj2, err_2;
+                                                                        return __generator(this, function (_a) {
+                                                                            switch (_a.label) {
+                                                                                case 0:
+                                                                                    y = y + 1;
+                                                                                    z_1 = 0;
+                                                                                    _a.label = 1;
+                                                                                case 1:
+                                                                                    if (!(z_1 < index.length)) return [3 /*break*/, 7];
+                                                                                    obj2 = JSON.parse(data[index[z_1]]);
+                                                                                    if (!(obj2['passed'] == false)) return [3 /*break*/, 5];
+                                                                                    _a.label = 2;
+                                                                                case 2:
+                                                                                    _a.trys.push([2, 4, , 5]);
+                                                                                    return [4 /*yield*/, datas.updateStepResult(obj2, issueId, response)];
+                                                                                case 3:
+                                                                                    _a.sent();
+                                                                                    return [3 /*break*/, 5];
+                                                                                case 4:
+                                                                                    err_2 = _a.sent();
+                                                                                    console.error(err_2);
+                                                                                    return [3 /*break*/, 5];
+                                                                                case 5:
+                                                                                    ;
+                                                                                    _a.label = 6;
+                                                                                case 6:
+                                                                                    z_1++;
+                                                                                    return [3 /*break*/, 1];
+                                                                                case 7: return [2 /*return*/];
+                                                                            }
+                                                                        });
+                                                                    });
+                                                                })];
                                                         case 1:
-                                                            if (!(z_1 < index.length)) return [3 /*break*/, 6];
-                                                            obj2 = JSON.parse(data[index[z_1]]);
-                                                            _a.label = 2;
-                                                        case 2:
-                                                            _a.trys.push([2, 4, , 5]);
-                                                            return [4 /*yield*/, datas.updateStepResult(obj2, issueId, response)];
-                                                        case 3:
                                                             _a.sent();
-                                                            return [3 /*break*/, 5];
-                                                        case 4:
-                                                            err_2 = _a.sent();
-                                                            console.error(err_2);
-                                                            return [3 /*break*/, 5];
-                                                        case 5:
-                                                            z_1++;
-                                                            return [3 /*break*/, 1];
-                                                        case 6: return [3 /*break*/, 8];
-                                                        case 7:
+                                                            return [3 /*break*/, 3];
+                                                        case 2:
                                                             if (res == true) {
                                                                 passedExecs[x] = response;
                                                                 x = x + 1;
                                                             }
-                                                            _a.label = 8;
-                                                        case 8:
+                                                            _a.label = 3;
+                                                        case 3:
                                                             if (wip == true) {
                                                                 pendingExecs[z] = response;
                                                                 z = z + 1;

@@ -32,6 +32,7 @@ export async function main() {
             let res = true;
             let wip = false;
             let count_pending_its = 0;
+            let count_failed_its = 0;
             // let failStepId: string;
             for (j = 0; j < index.length; j++) {
                const obj2 = JSON.parse(data[index[j]]);
@@ -48,15 +49,19 @@ export async function main() {
                if (wip == false) {
                   failedExecs[y] = response;
                }
-               y = y + 1;
-               for (let z = 0; z < index.length; z++) {
-                  const obj2 = JSON.parse(data[index[z]]);
-                  try {
-                     await datas.updateStepResult(obj2, issueId, response);
-                  } catch (err) {
-                     console.error(err);
+               await datas.bulkEditExecs(response, true).then(async function () {
+                  y = y + 1;
+                  for (let z = 0; z < index.length; z++) {
+                     const obj2 = JSON.parse(data[index[z]]);
+                     if (obj2['passed'] == false) {
+                        try {
+                           await datas.updateStepResult(obj2, issueId, response);
+                        } catch (err) {
+                           console.error(err);
+                        }
+                     };
                   }
-               }
+               })
             } else if (res == true) {
                passedExecs[x] = response;
                x = x + 1;
