@@ -46,7 +46,10 @@ export async function getIsseuId(jiraID: string) {
       console.log(err);
    }
 }
-export async function createExecution(jiraID: string = "15580") {
+export async function createExecution(jiraID: string = "") {
+   if(jiraID == ""){
+      console.error('No JIRA ID SET!')
+   };
    const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
    try {
       const data = await apicall.postData('/public/rest/api/1.0/execution', body);

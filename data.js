@@ -98,12 +98,16 @@ function getIsseuId(jiraID) {
 }
 exports.getIsseuId = getIsseuId;
 function createExecution(jiraID) {
-    if (jiraID === void 0) { jiraID = "15580"; }
+    if (jiraID === void 0) { jiraID = ""; }
     return __awaiter(this, void 0, void 0, function () {
         var body, data, json, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    if (jiraID == "") {
+                        console.error('No JIRA ID SET!');
+                    }
+                    ;
                     body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
                     _a.label = 1;
                 case 1:
