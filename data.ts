@@ -72,6 +72,20 @@ export async function bulkEditExecs(execs: Array<string>, status: boolean, pendi
    await apicall.postData('/public/rest/api/1.0/executions', body);
 }
 
+
+export async function putStepResult(execId: string, issueId: string, stepResultId: string, resultOfTest: string, console_log: string = 'Passed.') {
+   const body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
+   await new Promise<any>((resolve) => {
+      try {
+         apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body).then(function (response: any) {
+            resolve(response);
+         });
+      } catch (err) {
+         console.error(err);
+      }
+   });
+}
+
 export async function updateStepResult(obj: any, issueId: string, execId: string) {
    let data = await apicall.getData('/public/rest/api/1.0/teststep/' + issueId + '?projectId=10000');
    let stepResult = await apicall.getData('/public/rest/api/1.0/stepresult/search?executionId=' + execId + '&issueId=' + issueId + '&isOrdered=' + true);
@@ -97,8 +111,8 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
       stepResultId = stepResult.stepResults[indexOfStep]['id'];
 
       console.log("Issue id:", issueId);
-      console.log(step);
-      console.log("Console error", console_log);
+      console.log("It Description:", step);
+      console.log("Console message:", console_log);
 
       if (pending == true) {
          resultOfTest = 3;
@@ -109,17 +123,9 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
             resultOfTest = 2;
          }
       }
-      // const message = data[indexOfStep]['message'];
-      const body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
-      await new Promise<any>((resolve) => {
-         try {
-            apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body).then(function (response: any) {
-               resolve(response);
-            });
-         } catch (err) {
-            console.error(err);
-         }
-      });
+
+      await this.putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
+
    } else {
       console.error("Not matched it, please compare test it('description') definition and JIRA steps definition!");
    }
