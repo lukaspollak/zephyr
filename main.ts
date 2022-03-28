@@ -46,11 +46,12 @@ export async function main() {
                }
             }
             if (res == false && count_pending_its != index.length) {
-               if (wip == false) {
-                  failedExecs[y] = response;
+               if (wip != false) {
                   y--;
-               }
-            
+               } else {
+                  failedExecs[y] = response;
+               };
+
                await datas.bulkEditSteps(response, true).then(async function () {
                   y = y + 1;
                   for (let z = 0; z < index.length; z++) {
