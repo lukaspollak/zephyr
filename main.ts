@@ -48,6 +48,7 @@ export async function main() {
             if (res == false && count_pending_its != index.length) {
                if (wip == false) {
                   failedExecs[y] = response;
+                  y--;
                }
             
                await datas.bulkEditSteps(response, true).then(async function () {

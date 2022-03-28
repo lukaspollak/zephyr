@@ -104,6 +104,7 @@ function main() {
                                                             if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 2];
                                                             if (wip == false) {
                                                                 failedExecs[y] = response;
+                                                                y--;
                                                             }
                                                             return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function () {
                                                                     return __awaiter(this, void 0, void 0, function () {
