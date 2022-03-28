@@ -9,9 +9,11 @@ export async function main() {
    let x = 0;
    let y = 0;
    let z = 0;
+   let unexecutedExecsIndex = 0;
    let passedExecs: Array<string> = [''];
    let failedExecs: Array<string> = [''];
    let pendingExecs: Array<string> = [''];
+   let unexecutedExecs: Array<string> = [''];
 
    function getAllIndexes(arr: any, val: any) {
       var indexes = [], i = -1;
@@ -69,9 +71,11 @@ export async function main() {
                passedExecs[x] = response;
                x = x + 1;
             }
-            if (wip == true) {
+            if (wip == true && count_pending_its != index.length) {
                pendingExecs[z] = response;
                z = z + 1;
+            } else if (count_pending_its == index.length) {
+               unexecutedExecs[unexecutedExecsIndex] = response;
             }
          });
       } catch (err) {
@@ -96,6 +100,7 @@ export async function main() {
    console.log("Passed", passedExecs);
    console.log("Failed", failedExecs);
    console.log("Pending", pendingExecs);
+   console.log("Unexecuted", unexecutedExecs);
 }
 
 main();

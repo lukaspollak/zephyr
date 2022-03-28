@@ -50,7 +50,7 @@ function main() {
             }
             return indexes;
         }
-        var _a, data, crossids, i, j, x, y, z, passedExecs, failedExecs, pendingExecs, unique, _loop_1;
+        var _a, data, crossids, i, j, x, y, z, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, unique, _loop_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, datas.getFilesData()];
@@ -61,9 +61,11 @@ function main() {
                     x = 0;
                     y = 0;
                     z = 0;
+                    unexecutedExecsIndex = 0;
                     passedExecs = [''];
                     failedExecs = [''];
                     pendingExecs = [''];
+                    unexecutedExecs = [''];
                     unique = Array.from(new Set(crossids));
                     _loop_1 = function () {
                         var index, obj, crossId, issueId, err_1;
@@ -154,9 +156,12 @@ function main() {
                                                             }
                                                             _a.label = 3;
                                                         case 3:
-                                                            if (wip == true) {
+                                                            if (wip == true && count_pending_its != index.length) {
                                                                 pendingExecs[z] = response;
                                                                 z = z + 1;
+                                                            }
+                                                            else if (count_pending_its == index.length) {
+                                                                unexecutedExecs[unexecutedExecsIndex] = response;
                                                             }
                                                             return [2 /*return*/];
                                                     }
@@ -202,6 +207,7 @@ function main() {
                     console.log("Passed", passedExecs);
                     console.log("Failed", failedExecs);
                     console.log("Pending", pendingExecs);
+                    console.log("Unexecuted", unexecutedExecs);
                     return [2 /*return*/];
             }
         });
