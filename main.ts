@@ -76,6 +76,7 @@ export async function main() {
                z = z + 1;
             } else if (count_pending_its == index.length) {
                unexecutedExecs[unexecutedExecsIndex] = response;
+               unexecutedExecsIndex = unexecutedExecsIndex + 1;
             }
          });
       } catch (err) {

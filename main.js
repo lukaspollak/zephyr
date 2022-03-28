@@ -162,6 +162,7 @@ function main() {
                                                             }
                                                             else if (count_pending_its == index.length) {
                                                                 unexecutedExecs[unexecutedExecsIndex] = response;
+                                                                unexecutedExecsIndex = unexecutedExecsIndex + 1;
                                                             }
                                                             return [2 /*return*/];
                                                     }
