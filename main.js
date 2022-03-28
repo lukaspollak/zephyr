@@ -81,14 +81,14 @@ function main() {
                                     _c.trys.push([2, 4, , 5]);
                                     return [4 /*yield*/, datas.createExecution(issueId).then(function (response) {
                                             return __awaiter(this, void 0, void 0, function () {
-                                                var res, wip, count_pending_its, count_failed_its, obj2;
+                                                var res, wip, count_pending_its, obj2;
                                                 return __generator(this, function (_a) {
                                                     switch (_a.label) {
                                                         case 0:
                                                             res = true;
                                                             wip = false;
                                                             count_pending_its = 0;
-                                                            count_failed_its = 0;
+                                                            // let count_failed_its = 0; -> to az na dalsiu optimalizaciu reportovania
                                                             // let failStepId: string;
                                                             for (j = 0; j < index.length; j++) {
                                                                 obj2 = JSON.parse(data[index[j]]);
@@ -105,13 +105,12 @@ function main() {
                                                             if (wip == false) {
                                                                 failedExecs[y] = response;
                                                             }
-                                                            return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function (result) {
+                                                            return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function () {
                                                                     return __awaiter(this, void 0, void 0, function () {
                                                                         var z_1, obj2, err_2;
                                                                         return __generator(this, function (_a) {
                                                                             switch (_a.label) {
                                                                                 case 0:
-                                                                                    console.log('update stepov sa', result);
                                                                                     y = y + 1;
                                                                                     z_1 = 0;
                                                                                     _a.label = 1;

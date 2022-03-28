@@ -32,7 +32,7 @@ export async function main() {
             let res = true;
             let wip = false;
             let count_pending_its = 0;
-            let count_failed_its = 0;
+            // let count_failed_its = 0; -> to az na dalsiu optimalizaciu reportovania
             // let failStepId: string;
             for (j = 0; j < index.length; j++) {
                const obj2 = JSON.parse(data[index[j]]);
