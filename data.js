@@ -136,6 +136,11 @@ function bulkEditExecs(execs, status, pending, unexecuted) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    if (unexecuted == true) {
+                        status = null;
+                        pending = null;
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
+                    }
                     if (status == true && pending == false) {
                         body = { "executions": execs, "status": 1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
                     }
@@ -144,9 +149,6 @@ function bulkEditExecs(execs, status, pending, unexecuted) {
                     }
                     else if (status == false && pending == true) {
                         body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
-                    }
-                    else if (unexecuted == true) {
-                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
                     }
                     return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/executions', body)];
                 case 1:

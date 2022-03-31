@@ -47,7 +47,7 @@ export async function getIsseuId(jiraID: string) {
    }
 }
 export async function createExecution(jiraID: string = "") {
-   if(jiraID == ""){
+   if (jiraID == "") {
       console.error('No JIRA ID SET!')
    };
    const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
@@ -64,6 +64,11 @@ export async function createExecution(jiraID: string = "") {
 // createExecution()
 export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false, unexecuted: boolean = false) {
    let body: any;
+   if (unexecuted == true) {
+      status = null;
+      pending = null;
+      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
+   }
    if (status == true && pending == false) {
       body = { "executions": execs, "status": 1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
    } else if (status == false && pending == false) {
@@ -71,9 +76,6 @@ export async function bulkEditExecs(execs: Array<string>, status: boolean, pendi
    }
    else if (status == false && pending == true) {
       body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
-   }
-   else if (unexecuted == true) {
-      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
    }
    await apicall.postData('/public/rest/api/1.0/executions', body);
 }
