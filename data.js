@@ -128,8 +128,9 @@ function createExecution(jiraID) {
 }
 exports.createExecution = createExecution;
 // createExecution()
-function bulkEditExecs(execs, status, pending) {
+function bulkEditExecs(execs, status, pending, unexecuted) {
     if (pending === void 0) { pending = false; }
+    if (unexecuted === void 0) { unexecuted = false; }
     return __awaiter(this, void 0, void 0, function () {
         var body;
         return __generator(this, function (_a) {
@@ -143,6 +144,9 @@ function bulkEditExecs(execs, status, pending) {
                     }
                     else if (status == false && pending == true) {
                         body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
+                    }
+                    else if (unexecuted == true) {
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
                     }
                     return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/executions', body)];
                 case 1:

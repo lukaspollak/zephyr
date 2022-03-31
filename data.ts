@@ -62,7 +62,7 @@ export async function createExecution(jiraID: string = "") {
 }
 
 // createExecution()
-export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false) {
+export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false, unexecuted: boolean = false) {
    let body: any;
    if (status == true && pending == false) {
       body = { "executions": execs, "status": 1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
@@ -71,6 +71,9 @@ export async function bulkEditExecs(execs: Array<string>, status: boolean, pendi
    }
    else if (status == false && pending == true) {
       body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
+   }
+   else if (unexecuted == true) {
+      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
    }
    await apicall.postData('/public/rest/api/1.0/executions', body);
 }
