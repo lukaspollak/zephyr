@@ -128,13 +128,19 @@ function createExecution(jiraID) {
 }
 exports.createExecution = createExecution;
 // createExecution()
-function bulkEditExecs(execs, status, pending) {
+function bulkEditExecs(execs, status, pending, unexecuted) {
     if (pending === void 0) { pending = false; }
+    if (unexecuted === void 0) { unexecuted = false; }
     return __awaiter(this, void 0, void 0, function () {
         var body;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    if (unexecuted == true) {
+                        status = null;
+                        pending = null;
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
+                    }
                     if (status == true && pending == false) {
                         body = { "executions": execs, "status": 1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
                     }

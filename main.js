@@ -199,6 +199,9 @@ function main() {
                     return [4 /*yield*/, datas.bulkEditExecs(pendingExecs, false, true)];
                 case 7:
                     _b.sent();
+                    return [4 /*yield*/, datas.bulkEditExecs(unexecutedExecs, false, false, true)];
+                case 8:
+                    _b.sent();
                     // try {
                     //    fs.unlinkSync(fsPath)
                     //    //file removed
