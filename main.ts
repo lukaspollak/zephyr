@@ -90,6 +90,7 @@ export async function main() {
    await datas.bulkEditExecs(passedExecs, true);
    await datas.bulkEditExecs(failedExecs, false);
    await datas.bulkEditExecs(pendingExecs, false, true);
+   await datas.bulkEditExecs(unexecutedExecs, false, false, true);
 
    // try {
    //    fs.unlinkSync(fsPath)
