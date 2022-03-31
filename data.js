@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getFilesData = exports.execs = exports.updateStepResult = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.createCycle = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.createCycle = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var apicall = require('./apicall');
 var config = require('./config.json');
 var auth = require('./jwt-auth');
@@ -98,12 +98,16 @@ function getIsseuId(jiraID) {
 }
 exports.getIsseuId = getIsseuId;
 function createExecution(jiraID) {
-    if (jiraID === void 0) { jiraID = "15580"; }
+    if (jiraID === void 0) { jiraID = ""; }
     return __awaiter(this, void 0, void 0, function () {
         var body, data, json, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    if (jiraID == "") {
+                        console.error('No JIRA ID SET!');
+                    }
+                    ;
                     body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
                     _a.label = 1;
                 case 1:
@@ -149,9 +153,57 @@ function bulkEditExecs(execs, status, pending) {
     });
 }
 exports.bulkEditExecs = bulkEditExecs;
+function bulkEditSteps(exec, status) {
+    return __awaiter(this, void 0, void 0, function () {
+        var body, execs;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    execs = [exec];
+                    if (status == true) {
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
+                    }
+                    else if (status == false) {
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 2 };
+                    }
+                    return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/executions', body)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.bulkEditSteps = bulkEditSteps;
+function putStepResult(execId, issueId, stepResultId, resultOfTest, console_log) {
+    if (console_log === void 0) { console_log = 'Passed.'; }
+    return __awaiter(this, void 0, void 0, function () {
+        var body;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
+                    return [4 /*yield*/, new Promise(function (resolve) {
+                            try {
+                                apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body).then(function (response) {
+                                    resolve(response);
+                                });
+                            }
+                            catch (err) {
+                                console.error(err);
+                            }
+                        })];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.putStepResult = putStepResult;
 function updateStepResult(obj, issueId, execId) {
     return __awaiter(this, void 0, void 0, function () {
-        var data, stepResult, id, stepResultId, step, console_log, resultOfTest, passed, pending, selectedSteps, selectedStepsIds, indexOfStep, stepId, body_1;
+        var data, stepResult, id, stepResultId, step, console_log, resultOfTest, passed, pending, selectedSteps, selectedStepsIds, indexOfStep, stepId;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, apicall.getData('/public/rest/api/1.0/teststep/' + issueId + '?projectId=10000')];
@@ -181,8 +233,8 @@ function updateStepResult(obj, issueId, execId) {
                     stepId = stepResult.stepResults[indexOfStep]['stepId'];
                     stepResultId = stepResult.stepResults[indexOfStep]['id'];
                     console.log("Issue id:", issueId);
-                    console.log(step);
-                    console.log("Console error", console_log);
+                    console.log("It Description:", step);
+                    console.log("Console message:", console_log);
                     if (pending == true) {
                         resultOfTest = 3;
                     }
@@ -194,17 +246,7 @@ function updateStepResult(obj, issueId, execId) {
                             resultOfTest = 2;
                         }
                     }
-                    body_1 = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
-                    return [4 /*yield*/, new Promise(function (resolve) {
-                            try {
-                                apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body_1).then(function (response) {
-                                    resolve(response);
-                                });
-                            }
-                            catch (err) {
-                                console.error(err);
-                            }
-                        })];
+                    return [4 /*yield*/, this.putStepResult(execId, issueId, stepResultId, resultOfTest, console_log)];
                 case 3:
                     _a.sent();
                     return [3 /*break*/, 5];
