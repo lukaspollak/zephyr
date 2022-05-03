@@ -38,9 +38,8 @@ export async function main() {
       let issueId: string = await datas.getIsseuId(crossId);
 
       await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(async function (cycleId: any) {
-         console.log(cycleId)
          try {
-            await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv).then(async function (response: string) {
+            await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function (response: string) {
                let res = true;
                let wip = false;
                let count_pending_its = 0;

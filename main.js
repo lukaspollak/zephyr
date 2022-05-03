@@ -90,11 +90,8 @@ function main() {
                                                 return __generator(this, function (_a) {
                                                     switch (_a.label) {
                                                         case 0:
-                                                            console.log(cycleId);
-                                                            _a.label = 1;
-                                                        case 1:
-                                                            _a.trys.push([1, 3, , 4]);
-                                                            return [4 /*yield*/, datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv).then(function (response) {
+                                                            _a.trys.push([0, 2, , 3]);
+                                                            return [4 /*yield*/, datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(function (response) {
                                                                     return __awaiter(this, void 0, void 0, function () {
                                                                         var res, wip, count_pending_its, obj2;
                                                                         return __generator(this, function (_a) {
@@ -182,14 +179,14 @@ function main() {
                                                                         });
                                                                     });
                                                                 })];
-                                                        case 2:
+                                                        case 1:
                                                             _a.sent();
-                                                            return [3 /*break*/, 4];
-                                                        case 3:
+                                                            return [3 /*break*/, 3];
+                                                        case 2:
                                                             err_1 = _a.sent();
                                                             console.log(err_1);
-                                                            return [3 /*break*/, 4];
-                                                        case 4: return [2 /*return*/];
+                                                            return [3 /*break*/, 3];
+                                                        case 3: return [2 /*return*/];
                                                     }
                                                 });
                                             });
