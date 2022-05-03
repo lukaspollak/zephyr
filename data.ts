@@ -110,9 +110,11 @@ export async function getIsseuId(jiraID: string) {
       console.log(err);
    }
 }
-
-export async function createExecution(jiraID: string = "15580", cycleId: string, versionId: number = -1) {
-   const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": cycleId, "versionId": versionId, "assigneeType": "currentUser" };
+export async function createExecution(jiraID: string = "") {
+   if (jiraID == "") {
+      console.error('No JIRA ID SET!')
+   };
+   const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
    try {
       const data = await apicall.postData('/public/rest/api/1.0/execution', body);
       const json = JSON.parse(data);
@@ -122,8 +124,18 @@ export async function createExecution(jiraID: string = "15580", cycleId: string,
    }
 }
 
-export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false) {
+   }
+
+}
+
+// createExecution()
+export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false, unexecuted: boolean = false) {
    let body: any;
+   if (unexecuted == true) {
+      status = null;
+      pending = null;
+      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
+   }
    if (status == true && pending == false) {
       body = { "executions": execs, "status": 1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
    } else if (status == false && pending == false) {
@@ -133,6 +145,31 @@ export async function bulkEditExecs(execs: Array<string>, status: boolean, pendi
       body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
    }
    await apicall.postData('/public/rest/api/1.0/executions', body);
+}
+
+export async function bulkEditSteps(exec: string, status: boolean) {
+   let body: any;
+   const execs = [exec];
+   if (status == true) {
+      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
+   } else if (status == false) {
+      body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 2 };
+   }
+   await apicall.postData('/public/rest/api/1.0/executions', body);
+}
+
+
+export async function putStepResult(execId: string, issueId: string, stepResultId: string, resultOfTest: string, console_log: string = 'Passed.') {
+   const body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
+   await new Promise<any>((resolve) => {
+      try {
+         apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body).then(function (response: any) {
+            resolve(response);
+         });
+      } catch (err) {
+         console.error(err);
+      }
+   });
 }
 
 export async function updateStepResult(obj: any, issueId: string, execId: string) {
@@ -156,12 +193,12 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
    if (selectedSteps.includes(step)) {
       const indexOfStep = selectedSteps.indexOf(step);
       id = selectedStepsIds[indexOfStep];
-      const stepId = stepResult.stepResults[indexOfStep]['stepId'];
+      let stepId = stepResult.stepResults[indexOfStep]['stepId'];
       stepResultId = stepResult.stepResults[indexOfStep]['id'];
 
       console.log("Issue id:", issueId);
-      console.log(step);
-      console.log("Console error", console_log);
+      console.log("It Description:", step);
+      console.log("Console message:", console_log);
 
       if (pending == true) {
          resultOfTest = 3;
@@ -172,17 +209,9 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
             resultOfTest = 2;
          }
       }
-      // const message = data[indexOfStep]['message'];
-      const body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
-      await new Promise<any>((resolve) => {
-         try {
-            apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body).then(function (response: any) {
-               resolve(response);
-            });
-         } catch (err) {
-            console.error(err);
-         }
-      });
+
+      await this.putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
+
    } else {
       console.error("Not matched it, please compare test it('description') definition and JIRA steps definition!");
    }
