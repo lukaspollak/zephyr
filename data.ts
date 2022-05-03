@@ -2,11 +2,9 @@ import { JsonObjectExpression, StringMappingType } from "typescript";
 import { getJiraData } from "./apicall";
 
 const apicall = require('./apicall');
-const config = require('./config.json');
-const auth = require('./jwt-auth');
 const testFolder = '../cross-app/reports/jsons';
 const fs = require('fs');
-const readline = require('readline');
+const ZephyrApiVersion = '/public/rest/api/1.0';
 
 export function getTestIT(description: String) {
    const start_pos = 0;
@@ -35,7 +33,7 @@ export function getTestId(description: String) {
    }
 }
 
-export async function getIdOfVersion(version: string = "2.0.5", projectId: number = 10000) {
+export async function getIdOfVersion(versionName: string, projectId: number = 10000) {
    let versions: string;
    let versionsJSON: JSON;
    let id: number = -1;
@@ -43,23 +41,23 @@ export async function getIdOfVersion(version: string = "2.0.5", projectId: numbe
       versions = await apicall.getJiraData("project/" + projectId + "/versions");
       versionsJSON = JSON.parse(versions);
    } catch (err) {
-      console.log("Versions call troubles!", err);
+      console.log('Versions call troubles!', err);
    }
 
    for (let i in versionsJSON) {
-      if (versionsJSON[i].name === version) {
+      if (versionsJSON[i].name === versionName) {
          id = versionsJSON[i].id;
          return id;
       }
    }
 
    if (id === -1) {
-      console.log('Version does not exist!');
+      console.log('Version does not exist or it is Ad Hoc!');
    }
    return id;
 }
 
-export async function createCycle(branch: string = "release/2.0.5", projectId: number = 10000) {
+export async function createCycle(branch: string, projectId: number = 10000) {
    let response: any;
    let version: string = '';
    let environment: string = '';
@@ -76,28 +74,57 @@ export async function createCycle(branch: string = "release/2.0.5", projectId: n
       environment = 'TEST';
       description = 'Tests was runned during release period!';
 
-      version = branch.split('/').pop();;
-   }
+      version = branch.split('/').pop();
 
-   try {
-      await getIdOfVersion(version, projectId).then(async function (versionID: number){
-         const body = {
-            "name": cycleName,
-            "environment": environment,
-            "description": description,
-            "versionId": versionID,
-            "projectId": projectId
-         };
+      try {
+         await getIdOfVersion(version, projectId).then(async function (versionID: number) {
+            const body = {
+               "name": cycleName,
+               "environment": environment,
+               "description": description,
+               "versionId": versionID,
+               "projectId": projectId
+            };
 
-         response = await apicall.postData('/public/rest/api/1.0/cycle', body);
-         const data = JSON.parse(response);
-         return data.id;
-      })
-   } catch (error) {
-      console.log("Continue as Ad hoc reporting, because an error occured when founding version:", error);
-      return response = -1;
+            response = await apicall.postData(ZephyrApiVersion + '/cycle', body);
+            const data = JSON.parse(response);
+            return data.id;
+         });
+      } catch (error) {
+         console.log("Continue as Ad hoc reporting, because an error occured when founding version:", error);
+         return response = -1;
+      }
    }
 }
+
+// createCycle("release/2.17.0");
+
+export async function getCycleId(branch: string, cycleName: string, projectId: number = 10000) {
+   let response: any;
+   let cycle_id: any = -1;
+   const versionName = branch.split('/').pop();
+   cycle_id = getIdOfVersion(versionName).then(async function (versionID: number) {
+      if (versionID != -1) {
+         response = await apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId);
+         const cycleJSON = JSON.parse(response);
+         for (let i in cycleJSON) {
+            if (cycleJSON[i].name === cycleName) {
+               cycle_id = cycleJSON[i].id;
+               return cycle_id;
+            }
+         }
+         if (cycle_id === -1) {
+            console.log('Cycle does not exist!');
+            return cycle_id;
+         }
+      } else {
+         console.error("Version does not Exist!");
+      }
+   });
+   return cycle_id;
+}
+
+// getCycleId("release/2.17.0", "TEST");
 
 export async function getIsseuId(jiraID: string) {
    try {
@@ -110,17 +137,23 @@ export async function getIsseuId(jiraID: string) {
       console.log(err);
    }
 }
-export async function createExecution(jiraID: string = "") {
+export async function createExecution(jiraID: string = "", cycleId: String, branch: string) {
    if (jiraID == "") {
-      console.error('No JIRA ID SET!')
+      console.error('No JIRA ID SET!');
    };
-   const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
-   try {
-      const data = await apicall.postData('/public/rest/api/1.0/execution', body);
-      const json = JSON.parse(data);
-      return json['execution']['id'];
-   } catch (err) {
-      console.log('Execution error>', err);
+   const versionName = branch.split('/').pop();
+   const versionID = await this.getIdOfVersion(versionName);
+   if (cycleId == "-1") {
+      cycleId = this.createCycle(branch);
+   } else {
+      const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": cycleId, "versionId": versionID, "assigneeType": "currentUser" };
+      try {
+         const data = await apicall.postData(ZephyrApiVersion + '/execution', body);
+         const json = JSON.parse(data);
+         return json['execution']['id'];
+      } catch (err) {
+         console.log('Execution error:', err);
+      }
    }
 }
 
@@ -140,7 +173,7 @@ export async function bulkEditExecs(execs: Array<string>, status: boolean, pendi
    else if (status == false && pending == true) {
       body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
    }
-   await apicall.postData('/public/rest/api/1.0/executions', body);
+   await apicall.postData(ZephyrApiVersion + '/executions', body);
 }
 
 export async function bulkEditSteps(exec: string, status: boolean) {
@@ -151,7 +184,7 @@ export async function bulkEditSteps(exec: string, status: boolean) {
    } else if (status == false) {
       body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 2 };
    }
-   await apicall.postData('/public/rest/api/1.0/executions', body);
+   await apicall.postData(ZephyrApiVersion + '/executions', body);
 }
 
 
@@ -159,7 +192,7 @@ export async function putStepResult(execId: string, issueId: string, stepResultI
    const body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
    await new Promise<any>((resolve) => {
       try {
-         apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body).then(function (response: any) {
+         apicall.putData(ZephyrApiVersion + '/stepresult/' + stepResultId, body).then(function (response: any) {
             resolve(response);
          });
       } catch (err) {
@@ -169,8 +202,8 @@ export async function putStepResult(execId: string, issueId: string, stepResultI
 }
 
 export async function updateStepResult(obj: any, issueId: string, execId: string) {
-   let data = await apicall.getData('/public/rest/api/1.0/teststep/' + issueId + '?projectId=10000');
-   let stepResult = await apicall.getData('/public/rest/api/1.0/stepresult/search?executionId=' + execId + '&issueId=' + issueId + '&isOrdered=' + true);
+   let data = await apicall.getData(ZephyrApiVersion + '/teststep/' + issueId + '?projectId=10000');
+   let stepResult = await apicall.getData(ZephyrApiVersion + '/stepresult/search?executionId=' + execId + '&issueId=' + issueId + '&isOrdered=' + true);
 
    data = JSON.parse(data);
    stepResult = JSON.parse(stepResult);
@@ -212,6 +245,7 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
       console.error("Not matched it, please compare test it('description') definition and JIRA steps definition!");
    }
 }
+
 export async function execs(path = '../cross-app/reports/jsons/') {
    let i = 0;
    async function getFiles() {
@@ -254,4 +288,3 @@ export async function getFilesData(path: string = '../cross-app/reports/jsons/')
    }
    return [data, crosids];
 }
-

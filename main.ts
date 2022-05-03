@@ -24,18 +24,19 @@ export async function main() {
    }
 
    const unique = Array.from(new Set(crossids));
-   const cycleId = '47bcc20c-f3cc-4b14-b5cd-b915cb685719'
    while (i < unique.length) {
       let index = getAllIndexes(crossids, unique[i]);
       let obj = JSON.parse(data[index[0]]);
       let crossId: string = datas.getJiraCrosId(obj['description']);
       let issueId: string = await datas.getIsseuId(crossId);
+      let cycleId: string = await datas.getCycleId(process.argv[3] as String, process.argv[4] as String);
+
       try {
-         await datas.createExecution(issueId).then(async function (response: string) {
+         await datas.createExecution(issueId, cycleId, process.argv[3]).then(async function (response: string) {
             let res = true;
             let wip = false;
             let count_pending_its = 0;
-            // let count_failed_its = 0; -> to az na dalsiu optimalizaciu reportovania
+            // let count_failed_its = 0; -> for next optimalization
             // let failStepId: string;
             for (j = 0; j < index.length; j++) {
                const obj2 = JSON.parse(data[index[j]]);

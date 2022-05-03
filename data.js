@@ -36,13 +36,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getFilesData = exports.execs = exports.updateStepResult = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var apicall = require('./apicall');
-var config = require('./config.json');
-var auth = require('./jwt-auth');
 var testFolder = '../cross-app/reports/jsons';
 var fs = require('fs');
-var readline = require('readline');
+var ZephyrApiVersion = '/public/rest/api/1.0';
 function getTestIT(description) {
     var start_pos = 0;
     var start_pos1 = description.indexOf('|');
@@ -70,8 +68,7 @@ function getTestId(description) {
     }
 }
 exports.getTestId = getTestId;
-function getIdOfVersion(version, projectId) {
-    if (version === void 0) { version = "2.0.5"; }
+function getIdOfVersion(versionName, projectId) {
     if (projectId === void 0) { projectId = 10000; }
     return __awaiter(this, void 0, void 0, function () {
         var versions, versionsJSON, id, err_1, i;
@@ -89,17 +86,17 @@ function getIdOfVersion(version, projectId) {
                     return [3 /*break*/, 4];
                 case 3:
                     err_1 = _a.sent();
-                    console.log("Versions call troubles!", err_1);
+                    console.log('Versions call troubles!', err_1);
                     return [3 /*break*/, 4];
                 case 4:
                     for (i in versionsJSON) {
-                        if (versionsJSON[i].name === version) {
+                        if (versionsJSON[i].name === versionName) {
                             id = versionsJSON[i].id;
                             return [2 /*return*/, id];
                         }
                     }
                     if (id === -1) {
-                        console.log('Version does not exist!');
+                        console.log('Version does not exist or it is Ad Hoc!');
                     }
                     return [2 /*return*/, id];
             }
@@ -108,7 +105,6 @@ function getIdOfVersion(version, projectId) {
 }
 exports.getIdOfVersion = getIdOfVersion;
 function createCycle(branch, projectId) {
-    if (branch === void 0) { branch = "release/2.0.5"; }
     if (projectId === void 0) { projectId = 10000; }
     return __awaiter(this, void 0, void 0, function () {
         var response, version, environment, cycleName, description, error_1;
@@ -124,13 +120,11 @@ function createCycle(branch, projectId) {
                         environment = 'DEVELOPMENT';
                         description = 'Tests was runned during development period!';
                     }
-                    if (branch.toLowerCase().includes('release')) {
-                        cycleName = 'RELEASE';
-                        environment = 'TEST';
-                        description = 'Tests was runned during release period!';
-                        version = branch.split('/').pop();
-                        ;
-                    }
+                    if (!branch.toLowerCase().includes('release')) return [3 /*break*/, 4];
+                    cycleName = 'RELEASE';
+                    environment = 'TEST';
+                    description = 'Tests was runned during release period!';
+                    version = branch.split('/').pop();
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
@@ -147,7 +141,7 @@ function createCycle(branch, projectId) {
                                                 "versionId": versionID,
                                                 "projectId": projectId
                                             };
-                                            return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/cycle', body)];
+                                            return [4 /*yield*/, apicall.postData(ZephyrApiVersion + '/cycle', body)];
                                         case 1:
                                             response = _a.sent();
                                             data = JSON.parse(response);
@@ -169,6 +163,50 @@ function createCycle(branch, projectId) {
     });
 }
 exports.createCycle = createCycle;
+// createCycle("release/2.17.0");
+function getCycleId(branch, cycleName, projectId) {
+    if (projectId === void 0) { projectId = 10000; }
+    return __awaiter(this, void 0, void 0, function () {
+        var response, cycle_id, versionName;
+        return __generator(this, function (_a) {
+            cycle_id = -1;
+            versionName = branch.split('/').pop();
+            cycle_id = getIdOfVersion(versionName).then(function (versionID) {
+                return __awaiter(this, void 0, void 0, function () {
+                    var cycleJSON, i;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (!(versionID != -1)) return [3 /*break*/, 2];
+                                return [4 /*yield*/, apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId)];
+                            case 1:
+                                response = _a.sent();
+                                cycleJSON = JSON.parse(response);
+                                for (i in cycleJSON) {
+                                    if (cycleJSON[i].name === cycleName) {
+                                        cycle_id = cycleJSON[i].id;
+                                        return [2 /*return*/, cycle_id];
+                                    }
+                                }
+                                if (cycle_id === -1) {
+                                    console.log('Cycle does not exist!');
+                                    return [2 /*return*/, cycle_id];
+                                }
+                                return [3 /*break*/, 3];
+                            case 2:
+                                console.error("Version does not Exist!");
+                                _a.label = 3;
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            return [2 /*return*/, cycle_id];
+        });
+    });
+}
+exports.getCycleId = getCycleId;
+// getCycleId("release/2.17.0", "TEST");
 function getIsseuId(jiraID) {
     return __awaiter(this, void 0, void 0, function () {
         var issueIDJson, data, err_2;
@@ -193,40 +231,59 @@ function getIsseuId(jiraID) {
     });
 }
 exports.getIsseuId = getIsseuId;
-function createExecution(jiraID, cycleId, versionId) {
-    if (jiraID === void 0) { jiraID = "15580"; }
-    if (versionId === void 0) { versionId = -1; }
+function createExecution(jiraID, cycleId, branch) {
+    if (jiraID === void 0) { jiraID = ""; }
     return __awaiter(this, void 0, void 0, function () {
-        var body, data, json, err_3;
+        var versionName, versionID, body, data, json, err_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": cycleId, "versionId": versionId, "assigneeType": "currentUser" };
-                    _a.label = 1;
+                    if (jiraID == "") {
+                        console.error('No JIRA ID SET!');
+                    }
+                    ;
+                    versionName = branch.split('/').pop();
+                    return [4 /*yield*/, this.getIdOfVersion(versionName)];
                 case 1:
-                    _a.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/execution', body)];
+                    versionID = _a.sent();
+                    if (!(cycleId == "-1")) return [3 /*break*/, 2];
+                    cycleId = this.createCycle(branch);
+                    return [3 /*break*/, 6];
                 case 2:
+                    body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": cycleId, "versionId": versionID, "assigneeType": "currentUser" };
+                    _a.label = 3;
+                case 3:
+                    _a.trys.push([3, 5, , 6]);
+                    return [4 /*yield*/, apicall.postData(ZephyrApiVersion + '/execution', body)];
+                case 4:
                     data = _a.sent();
                     json = JSON.parse(data);
+                    console.log(json);
                     return [2 /*return*/, json['execution']['id']];
-                case 3:
+                case 5:
                     err_3 = _a.sent();
-                    console.log('Execution error>', err_3);
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+                    console.log('Execution error:', err_3);
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
     });
 }
 exports.createExecution = createExecution;
-function bulkEditExecs(execs, status, pending) {
+// createExecution()
+function bulkEditExecs(execs, status, pending, unexecuted) {
     if (pending === void 0) { pending = false; }
+    if (unexecuted === void 0) { unexecuted = false; }
     return __awaiter(this, void 0, void 0, function () {
         var body;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    if (unexecuted == true) {
+                        status = null;
+                        pending = null;
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": -1 };
+                    }
                     if (status == true && pending == false) {
                         body = { "executions": execs, "status": 1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
                     }
@@ -236,7 +293,7 @@ function bulkEditExecs(execs, status, pending) {
                     else if (status == false && pending == true) {
                         body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
                     }
-                    return [4 /*yield*/, apicall.postData('/public/rest/api/1.0/executions', body)];
+                    return [4 /*yield*/, apicall.postData(ZephyrApiVersion + '/executions', body)];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];
@@ -245,15 +302,63 @@ function bulkEditExecs(execs, status, pending) {
     });
 }
 exports.bulkEditExecs = bulkEditExecs;
-function updateStepResult(obj, issueId, execId) {
+function bulkEditSteps(exec, status) {
     return __awaiter(this, void 0, void 0, function () {
-        var data, stepResult, id, stepResultId, step, console_log, resultOfTest, passed, pending, selectedSteps, selectedStepsIds, indexOfStep, stepId, body_1;
+        var body, execs;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, apicall.getData('/public/rest/api/1.0/teststep/' + issueId + '?projectId=10000')];
+                case 0:
+                    execs = [exec];
+                    if (status == true) {
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 1 };
+                    }
+                    else if (status == false) {
+                        body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 2 };
+                    }
+                    return [4 /*yield*/, apicall.postData(ZephyrApiVersion + '/executions', body)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.bulkEditSteps = bulkEditSteps;
+function putStepResult(execId, issueId, stepResultId, resultOfTest, console_log) {
+    if (console_log === void 0) { console_log = 'Passed.'; }
+    return __awaiter(this, void 0, void 0, function () {
+        var body;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
+                    return [4 /*yield*/, new Promise(function (resolve) {
+                            try {
+                                apicall.putData(ZephyrApiVersion + '/stepresult/' + stepResultId, body).then(function (response) {
+                                    resolve(response);
+                                });
+                            }
+                            catch (err) {
+                                console.error(err);
+                            }
+                        })];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.putStepResult = putStepResult;
+function updateStepResult(obj, issueId, execId) {
+    return __awaiter(this, void 0, void 0, function () {
+        var data, stepResult, id, stepResultId, step, console_log, resultOfTest, passed, pending, selectedSteps, selectedStepsIds, indexOfStep, stepId;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, apicall.getData(ZephyrApiVersion + '/teststep/' + issueId + '?projectId=10000')];
                 case 1:
                     data = _a.sent();
-                    return [4 /*yield*/, apicall.getData('/public/rest/api/1.0/stepresult/search?executionId=' + execId + '&issueId=' + issueId + '&isOrdered=' + true)];
+                    return [4 /*yield*/, apicall.getData(ZephyrApiVersion + '/stepresult/search?executionId=' + execId + '&issueId=' + issueId + '&isOrdered=' + true)];
                 case 2:
                     stepResult = _a.sent();
                     data = JSON.parse(data);
@@ -277,8 +382,8 @@ function updateStepResult(obj, issueId, execId) {
                     stepId = stepResult.stepResults[indexOfStep]['stepId'];
                     stepResultId = stepResult.stepResults[indexOfStep]['id'];
                     console.log("Issue id:", issueId);
-                    console.log(step);
-                    console.log("Console error", console_log);
+                    console.log("It Description:", step);
+                    console.log("Console message:", console_log);
                     if (pending == true) {
                         resultOfTest = 3;
                     }
@@ -290,17 +395,7 @@ function updateStepResult(obj, issueId, execId) {
                             resultOfTest = 2;
                         }
                     }
-                    body_1 = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
-                    return [4 /*yield*/, new Promise(function (resolve) {
-                            try {
-                                apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body_1).then(function (response) {
-                                    resolve(response);
-                                });
-                            }
-                            catch (err) {
-                                console.error(err);
-                            }
-                        })];
+                    return [4 /*yield*/, this.putStepResult(execId, issueId, stepResultId, resultOfTest, console_log)];
                 case 3:
                     _a.sent();
                     return [3 /*break*/, 5];
