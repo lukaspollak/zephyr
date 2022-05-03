@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var apicall = require('./apicall');
 var testFolder = '../cross-app/reports/jsons';
 var fs = require('fs');
@@ -97,8 +97,9 @@ function getIdOfVersion(versionName, projectId) {
                     }
                     if (id === -1) {
                         console.log('Version does not exist or it is Ad Hoc!');
+                        return [2 /*return*/, id];
                     }
-                    return [2 /*return*/, id];
+                    return [2 /*return*/];
             }
         });
     });
@@ -107,7 +108,7 @@ exports.getIdOfVersion = getIdOfVersion;
 function createCycle(branch, projectId) {
     if (projectId === void 0) { projectId = 10000; }
     return __awaiter(this, void 0, void 0, function () {
-        var response, version, environment, cycleName, description, error_1;
+        var response, version, environment, cycleName, description, result_data, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -115,6 +116,7 @@ function createCycle(branch, projectId) {
                     environment = '';
                     cycleName = '';
                     description = 'default description';
+                    result_data = '';
                     if (branch.toLowerCase() == "development") {
                         cycleName = 'DEVELOPMENT';
                         environment = 'DEVELOPMENT';
@@ -145,7 +147,8 @@ function createCycle(branch, projectId) {
                                         case 1:
                                             response = _a.sent();
                                             data = JSON.parse(response);
-                                            return [2 /*return*/, data.id];
+                                            result_data = data.id;
+                                            return [2 /*return*/];
                                     }
                                 });
                             });
@@ -157,64 +160,67 @@ function createCycle(branch, projectId) {
                     error_1 = _a.sent();
                     console.log("Continue as Ad hoc reporting, because an error occured when founding version:", error_1);
                     return [2 /*return*/, response = -1];
-                case 4: return [2 /*return*/];
+                case 4: return [2 /*return*/, result_data];
             }
         });
     });
 }
 exports.createCycle = createCycle;
-// createCycle("release/2.17.0");
 function getCycleId(branch, cycleName, projectId) {
     if (projectId === void 0) { projectId = 10000; }
     return __awaiter(this, void 0, void 0, function () {
         var response, cycle_id, versionName;
         return __generator(this, function (_a) {
-            cycle_id = -1;
-            versionName = branch.split('/').pop();
-            cycle_id = getIdOfVersion(versionName).then(function (versionID) {
-                return __awaiter(this, void 0, void 0, function () {
-                    var cycleJSON, i;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                if (!(versionID != -1)) return [3 /*break*/, 2];
-                                return [4 /*yield*/, apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId)];
-                            case 1:
-                                response = _a.sent();
-                                cycleJSON = JSON.parse(response);
-                                for (i in cycleJSON) {
-                                    if (cycleJSON[i].name === cycleName) {
-                                        cycle_id = cycleJSON[i].id;
-                                        return [2 /*return*/, cycle_id];
+            switch (_a.label) {
+                case 0:
+                    cycle_id = -1;
+                    versionName = branch.split('/').pop();
+                    return [4 /*yield*/, getIdOfVersion(versionName).then(function (versionID) {
+                            return __awaiter(this, void 0, void 0, function () {
+                                var cycleJSON, i;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            if (!(versionID != -1)) return [3 /*break*/, 2];
+                                            return [4 /*yield*/, apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId)];
+                                        case 1:
+                                            response = _a.sent();
+                                            cycleJSON = JSON.parse(response);
+                                            for (i in cycleJSON) {
+                                                if (cycleJSON[i].name === cycleName) {
+                                                    cycle_id = cycleJSON[i].id;
+                                                    return [2 /*return*/, cycle_id];
+                                                }
+                                            }
+                                            if (cycle_id == -1) {
+                                                console.log('Cycle does not exist!');
+                                                return [2 /*return*/, cycle_id];
+                                            }
+                                            return [3 /*break*/, 3];
+                                        case 2:
+                                            console.error("Version does not Exist!");
+                                            _a.label = 3;
+                                        case 3: return [2 /*return*/];
                                     }
-                                }
-                                if (cycle_id === -1) {
-                                    console.log('Cycle does not exist!');
-                                    return [2 /*return*/, cycle_id];
-                                }
-                                return [3 /*break*/, 3];
-                            case 2:
-                                console.error("Version does not Exist!");
-                                _a.label = 3;
-                            case 3: return [2 /*return*/];
-                        }
-                    });
-                });
-            });
-            return [2 /*return*/, cycle_id];
+                                });
+                            });
+                        })];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/, cycle_id];
+            }
         });
     });
 }
 exports.getCycleId = getCycleId;
-// getCycleId("release/2.17.0", "TEST");
-function getIsseuId(jiraID) {
+function getIsseuId(jiraIssueID) {
     return __awaiter(this, void 0, void 0, function () {
         var issueIDJson, data, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, apicall.getJiraData("issue/" + jiraID)];
+                    return [4 /*yield*/, apicall.getJiraData("issue/" + jiraIssueID)];
                 case 1:
                     issueIDJson = _a.sent();
                     data = JSON.parse(issueIDJson);
@@ -231,46 +237,90 @@ function getIsseuId(jiraID) {
     });
 }
 exports.getIsseuId = getIsseuId;
-function createExecution(jiraID, cycleId, branch) {
-    if (jiraID === void 0) { jiraID = ""; }
+function createAndAssignExecution(jiraIssueID, cycleId, branch) {
+    if (jiraIssueID === void 0) { jiraIssueID = ""; }
     return __awaiter(this, void 0, void 0, function () {
-        var versionName, versionID, body, data, json, err_3;
+        var versionName, versionID, response;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    if (jiraID == "") {
-                        console.error('No JIRA ID SET!');
-                    }
-                    ;
                     versionName = branch.split('/').pop();
                     return [4 /*yield*/, this.getIdOfVersion(versionName)];
                 case 1:
                     versionID = _a.sent();
-                    if (!(cycleId == "-1")) return [3 /*break*/, 2];
-                    cycleId = this.createCycle(branch);
-                    return [3 /*break*/, 6];
+                    if (jiraIssueID == "") {
+                        console.error('No JIRA ID SET!');
+                    }
+                    if (!(cycleId == -1)) return [3 /*break*/, 3];
+                    return [4 /*yield*/, this.createCycle(branch).then(function (cycleId) {
+                            return __awaiter(this, void 0, void 0, function () {
+                                var response;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            console.log("Jira issue id", jiraIssueID);
+                                            return [4 /*yield*/, this.createExecution(jiraIssueID, cycleId, versionID)];
+                                        case 1:
+                                            response = _a.sent();
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            });
+                        })];
                 case 2:
-                    body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": cycleId, "versionId": versionID, "assigneeType": "currentUser" };
-                    _a.label = 3;
-                case 3:
-                    _a.trys.push([3, 5, , 6]);
-                    return [4 /*yield*/, apicall.postData(ZephyrApiVersion + '/execution', body)];
+                    _a.sent();
+                    return [3 /*break*/, 5];
+                case 3: return [4 /*yield*/, this.createExecution(jiraIssueID, cycleId, versionID)];
                 case 4:
+                    response = _a.sent();
+                    return [2 /*return*/, response];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.createAndAssignExecution = createAndAssignExecution;
+function createExecution(jiraIssueID, cycleId, versionID) {
+    if (jiraIssueID === void 0) { jiraIssueID = ""; }
+    if (cycleId === void 0) { cycleId = -1; }
+    if (versionID === void 0) { versionID = -1; }
+    return __awaiter(this, void 0, void 0, function () {
+        var body, data, json, err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    body = {};
+                    if (jiraIssueID == "") {
+                        console.error('No JIRA ID SET!');
+                    }
+                    ;
+                    if (cycleId == -1 && versionID != -1) {
+                        body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraIssueID, "cycleId": -1, "versionId": versionID, "assigneeType": "currentUser" };
+                    }
+                    if (cycleId == -1 && versionID == -1) {
+                        body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraIssueID, "cycleId": -1, "versionId": -1, "assigneeType": "currentUser" };
+                    }
+                    if (cycleId != -1 && versionID != -1) {
+                        body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraIssueID, "cycleId": cycleId, "versionId": versionID, "assigneeType": "currentUser" };
+                    }
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, apicall.postData(ZephyrApiVersion + '/execution', body)];
+                case 2:
                     data = _a.sent();
                     json = JSON.parse(data);
-                    console.log(json);
                     return [2 /*return*/, json['execution']['id']];
-                case 5:
+                case 3:
                     err_3 = _a.sent();
                     console.log('Execution error:', err_3);
-                    return [3 /*break*/, 6];
-                case 6: return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     });
 }
 exports.createExecution = createExecution;
-// createExecution()
 function bulkEditExecs(execs, status, pending, unexecuted) {
     if (pending === void 0) { pending = false; }
     if (unexecuted === void 0) { unexecuted = false; }
