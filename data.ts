@@ -124,10 +124,6 @@ export async function createExecution(jiraID: string = "") {
    }
 }
 
-   }
-
-}
-
 // createExecution()
 export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false, unexecuted: boolean = false) {
    let body: any;
