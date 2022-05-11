@@ -50,25 +50,31 @@ function main() {
             }
             return indexes;
         }
-        var _a, data, crossids, i, j, x, y, z, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, unique, _loop_1;
+        var _a, data, crossids, i, j, x, y, z, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, branch_proccess_argv, cycle_proccess_argv, unique, _loop_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, datas.getFilesData()];
                 case 1:
                     _a = _b.sent(), data = _a[0], crossids = _a[1];
-                    i = 0;
-                    j = 0;
-                    x = 0;
-                    y = 0;
-                    z = 0;
+                    i = 0, j = 0, x = 0, y = 0, z = 0;
                     unexecutedExecsIndex = 0;
                     passedExecs = [''];
                     failedExecs = [''];
                     pendingExecs = [''];
                     unexecutedExecs = [''];
+                    branch_proccess_argv = process.argv[3];
+                    cycle_proccess_argv = process.argv[4];
+                    if (branch_proccess_argv == undefined) {
+                        branch_proccess_argv = "";
+                        console.warn("Branch is not filled in console arguments!");
+                    }
+                    if (cycle_proccess_argv == undefined) {
+                        cycle_proccess_argv = "";
+                        console.warn("Cycle name is not filled in console arguments!");
+                    }
                     unique = Array.from(new Set(crossids));
                     _loop_1 = function () {
-                        var index, obj, crossId, issueId, err_1;
+                        var index, obj, crossId, issueId;
                         return __generator(this, function (_c) {
                             switch (_c.label) {
                                 case 0:
@@ -78,70 +84,97 @@ function main() {
                                     return [4 /*yield*/, datas.getIsseuId(crossId)];
                                 case 1:
                                     issueId = _c.sent();
-                                    _c.label = 2;
-                                case 2:
-                                    _c.trys.push([2, 4, , 5]);
-                                    return [4 /*yield*/, datas.createExecution(issueId).then(function (response) {
+                                    return [4 /*yield*/, datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(function (cycleId) {
                                             return __awaiter(this, void 0, void 0, function () {
-                                                var res, wip, count_pending_its, obj2;
+                                                var err_1;
                                                 return __generator(this, function (_a) {
                                                     switch (_a.label) {
                                                         case 0:
-                                                            res = true;
-                                                            wip = false;
-                                                            count_pending_its = 0;
-                                                            // let count_failed_its = 0; -> to az na dalsiu optimalizaciu reportovania
-                                                            // let failStepId: string;
-                                                            for (j = 0; j < index.length; j++) {
-                                                                obj2 = JSON.parse(data[index[j]]);
-                                                                if (obj2['passed'] == false && obj2['pending'] == false) {
-                                                                    res = false;
-                                                                }
-                                                                if (obj2['pending'] == true) {
-                                                                    count_pending_its = count_pending_its + 1;
-                                                                    res = false;
-                                                                    wip = true;
-                                                                }
-                                                            }
-                                                            if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 2];
-                                                            if (wip != false) {
-                                                                y--;
-                                                            }
-                                                            else {
-                                                                failedExecs[y] = response;
-                                                            }
-                                                            ;
-                                                            return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function () {
+                                                            _a.trys.push([0, 2, , 3]);
+                                                            return [4 /*yield*/, datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(function (response) {
                                                                     return __awaiter(this, void 0, void 0, function () {
-                                                                        var z_1, obj2, err_2;
+                                                                        var res, wip, count_pending_its, obj2;
                                                                         return __generator(this, function (_a) {
                                                                             switch (_a.label) {
                                                                                 case 0:
-                                                                                    y = y + 1;
-                                                                                    z_1 = 0;
-                                                                                    _a.label = 1;
-                                                                                case 1:
-                                                                                    if (!(z_1 < index.length)) return [3 /*break*/, 7];
-                                                                                    obj2 = JSON.parse(data[index[z_1]]);
-                                                                                    if (!(obj2['passed'] == false)) return [3 /*break*/, 5];
-                                                                                    _a.label = 2;
-                                                                                case 2:
-                                                                                    _a.trys.push([2, 4, , 5]);
-                                                                                    return [4 /*yield*/, datas.updateStepResult(obj2, issueId, response)];
-                                                                                case 3:
-                                                                                    _a.sent();
-                                                                                    return [3 /*break*/, 5];
-                                                                                case 4:
-                                                                                    err_2 = _a.sent();
-                                                                                    console.error(err_2);
-                                                                                    return [3 /*break*/, 5];
-                                                                                case 5:
+                                                                                    res = true;
+                                                                                    wip = false;
+                                                                                    count_pending_its = 0;
+                                                                                    // let count_failed_its = 0; -> for next optimalization
+                                                                                    // let failStepId: string;
+                                                                                    for (j = 0; j < index.length; j++) {
+                                                                                        obj2 = JSON.parse(data[index[j]]);
+                                                                                        if (obj2['passed'] == false && obj2['pending'] == false) {
+                                                                                            res = false;
+                                                                                        }
+                                                                                        if (obj2['pending'] == true) {
+                                                                                            count_pending_its = count_pending_its + 1;
+                                                                                            res = false;
+                                                                                            wip = true;
+                                                                                        }
+                                                                                    }
+                                                                                    if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 2];
+                                                                                    if (wip != false) {
+                                                                                        y--;
+                                                                                    }
+                                                                                    else {
+                                                                                        failedExecs[y] = response;
+                                                                                    }
                                                                                     ;
-                                                                                    _a.label = 6;
-                                                                                case 6:
-                                                                                    z_1++;
-                                                                                    return [3 /*break*/, 1];
-                                                                                case 7: return [2 /*return*/];
+                                                                                    return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function () {
+                                                                                            return __awaiter(this, void 0, void 0, function () {
+                                                                                                var z_1, obj2, err_2;
+                                                                                                return __generator(this, function (_a) {
+                                                                                                    switch (_a.label) {
+                                                                                                        case 0:
+                                                                                                            y = y + 1;
+                                                                                                            z_1 = 0;
+                                                                                                            _a.label = 1;
+                                                                                                        case 1:
+                                                                                                            if (!(z_1 < index.length)) return [3 /*break*/, 7];
+                                                                                                            obj2 = JSON.parse(data[index[z_1]]);
+                                                                                                            if (!(obj2['passed'] == false)) return [3 /*break*/, 5];
+                                                                                                            _a.label = 2;
+                                                                                                        case 2:
+                                                                                                            _a.trys.push([2, 4, , 5]);
+                                                                                                            return [4 /*yield*/, datas.updateStepResult(obj2, issueId, response)];
+                                                                                                        case 3:
+                                                                                                            _a.sent();
+                                                                                                            return [3 /*break*/, 5];
+                                                                                                        case 4:
+                                                                                                            err_2 = _a.sent();
+                                                                                                            console.error(err_2);
+                                                                                                            return [3 /*break*/, 5];
+                                                                                                        case 5:
+                                                                                                            ;
+                                                                                                            _a.label = 6;
+                                                                                                        case 6:
+                                                                                                            z_1++;
+                                                                                                            return [3 /*break*/, 1];
+                                                                                                        case 7: return [2 /*return*/];
+                                                                                                    }
+                                                                                                });
+                                                                                            });
+                                                                                        })];
+                                                                                case 1:
+                                                                                    _a.sent();
+                                                                                    return [3 /*break*/, 3];
+                                                                                case 2:
+                                                                                    if (res == true) {
+                                                                                        passedExecs[x] = response;
+                                                                                        x = x + 1;
+                                                                                    }
+                                                                                    _a.label = 3;
+                                                                                case 3:
+                                                                                    if (wip == true && count_pending_its != index.length) {
+                                                                                        pendingExecs[z] = response;
+                                                                                        z = z + 1;
+                                                                                    }
+                                                                                    else if (count_pending_its == index.length) {
+                                                                                        unexecutedExecs[unexecutedExecsIndex] = response;
+                                                                                        unexecutedExecsIndex = unexecutedExecsIndex + 1;
+                                                                                    }
+                                                                                    return [2 /*return*/];
                                                                             }
                                                                         });
                                                                     });
@@ -150,33 +183,16 @@ function main() {
                                                             _a.sent();
                                                             return [3 /*break*/, 3];
                                                         case 2:
-                                                            if (res == true) {
-                                                                passedExecs[x] = response;
-                                                                x = x + 1;
-                                                            }
-                                                            _a.label = 3;
-                                                        case 3:
-                                                            if (wip == true && count_pending_its != index.length) {
-                                                                pendingExecs[z] = response;
-                                                                z = z + 1;
-                                                            }
-                                                            else if (count_pending_its == index.length) {
-                                                                unexecutedExecs[unexecutedExecsIndex] = response;
-                                                                unexecutedExecsIndex = unexecutedExecsIndex + 1;
-                                                            }
-                                                            return [2 /*return*/];
+                                                            err_1 = _a.sent();
+                                                            console.log(err_1);
+                                                            return [3 /*break*/, 3];
+                                                        case 3: return [2 /*return*/];
                                                     }
                                                 });
                                             });
                                         })];
-                                case 3:
+                                case 2:
                                     _c.sent();
-                                    return [3 /*break*/, 5];
-                                case 4:
-                                    err_1 = _c.sent();
-                                    console.log(err_1);
-                                    return [3 /*break*/, 5];
-                                case 5:
                                     console.log("Importing", crossId);
                                     i = i + 1;
                                     return [2 /*return*/];

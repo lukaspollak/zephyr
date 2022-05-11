@@ -22,7 +22,7 @@ function getJWT(extendeApiCallUrl, typereq) {
         exp: now.add(10, "minutes").unix(),
         qsh: jwt.createQueryStringHash(req, false, baseUrl)
     };
-    var token = jwt.encodeSymmetric(tokenData, secretKey);
+    var token = jwt.encode(tokenData, secretKey);
     return token;
 }
 exports.getJWT = getJWT;

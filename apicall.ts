@@ -6,8 +6,8 @@ const auth = require('./jwt-auth');
 const request = require("request");
 // const fetch = require('node-fetch');
 
-export async function getJiraData(issueIdOrKey, login = "pollak@bart.sk", api_token: string = config.pollak.jira_token) {
-    const url = 'https://crossuite.atlassian.net/rest/api/3/issue/' + issueIdOrKey;
+export async function getJiraData(urlParams, login = "pollak@bart.sk", api_token: string = config.pollak.jira_token) {
+    const url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
     const options = {
         method: 'GET',
         headers: {

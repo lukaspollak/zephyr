@@ -1,6 +1,8 @@
+import { JsonObjectExpression, StringMappingType } from "typescript";
+import { getJiraData } from "./apicall";
+const ZephyrApiVersion = '/public/rest/api/1.0';
+const jiraProjectID = 10000;
 const apicall = require('./apicall');
-const config = require('./config.json');
-const auth = require('./jwt-auth');
 const testFolder = '../cross-app/reports/jsons';
 const fs = require('fs');
 
@@ -31,13 +33,110 @@ export function getTestId(description: String) {
    }
 }
 
-export function createCycle() {
-   // console.log("Cycle not created because function is not implemented");
+export async function getIdOfVersion(versionName: string, projectId: number = jiraProjectID) {
+   let versions: string;
+   let versionsJSON: JSON;
+   let id: number = -1;
+   try {
+      versions = await apicall.getJiraData('project/' + projectId + '/versions');
+      versionsJSON = JSON.parse(versions);
+   } catch (err) {
+      console.log('Versions call troubles!', err);
+   }
+
+   for (let i in versionsJSON) {
+      if (versionsJSON[i].name === versionName) {
+         id = versionsJSON[i].id;
+         return id;
+      }
+   }
+
+   if (id === -1) {
+      console.log('Version does not exist or it is Ad Hoc!');
+      return id;
+   }
 }
 
-export async function getIsseuId(jiraID: string) {
+export async function createCycle(branch: string, custom_cycle_name: string = '', projectId: number = jiraProjectID) {
+   let response: any;
+   let version: string = '';
+   let environment: string = '';
+   let cycleName: string = '';
+   let description: string = 'default description';
+   let cycle_id: string = '';
+
+   if (branch.toLowerCase() == "development") {
+      cycleName = 'DEVELOPMENT';
+      environment = 'DEVELOPMENT';
+      description = 'Tests was runned during development period!';
+   }
+   if (branch.toLowerCase().includes('release')) {
+      cycleName = 'RELEASE';
+      environment = 'TEST';
+      description = 'Tests was runned during release period!';
+   }
+   if (custom_cycle_name != '') {
+      cycleName = custom_cycle_name;
+      environment = 'TEST';
+      description = 'Tests was runned during release period as custom release cycle!';
+   }
+
+   version = branch.split('/').pop();
    try {
-      let issueIDJson: any = await apicall.getJiraData(jiraID);
+      await getIdOfVersion(version, projectId).then(async function (versionID: number) {
+         const body = {
+            "name": cycleName,
+            "environment": environment,
+            "description": description,
+            "versionId": versionID,
+            "projectId": projectId
+         };
+
+         response = await apicall.postData(ZephyrApiVersion + '/cycle', body);
+         const data = JSON.parse(response);
+         cycle_id = data.id;
+      });
+   } catch (error) {
+      console.log("Continue as Ad hoc reporting, because an error occured when founding version:", error);
+      cycle_id = undefined;
+   }
+   return cycle_id;
+}
+
+export async function getCycleId(branch: string, cycleName: string = '', projectId: number = jiraProjectID) {
+   let response: any;
+   let cycle_id: any = -1;
+   const splittedVersion = branch.split('/', 2);
+   const versionName = splittedVersion[1];
+
+   if (cycleName == '') {
+      cycleName = splittedVersion[0];
+   }
+
+   await getIdOfVersion(versionName).then(async function (versionID: number) {
+      if (versionID != -1) {
+         response = await apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId);
+         const cycleJSON = JSON.parse(response);
+         for (let i in cycleJSON) {
+            if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
+               cycle_id = cycleJSON[i].id;
+               return cycle_id;
+            }
+         }
+         if (cycle_id == -1) {
+            console.log('Cycle does not exist!');
+            return cycle_id;
+         }
+      } else {
+         console.error("Version does not Exist!");
+      }
+   });
+   return cycle_id;
+}
+
+export async function getIsseuId(jiraIssueID: string) {
+   try {
+      let issueIDJson: any = await apicall.getJiraData("issue/" + jiraIssueID);
       let data = JSON.parse(issueIDJson);
       data = data.id;
       data = data.toString();
@@ -46,22 +145,50 @@ export async function getIsseuId(jiraID: string) {
       console.log(err);
    }
 }
-export async function createExecution(jiraID: string = "") {
-   if (jiraID == "") {
-      console.error('No JIRA ID SET!')
+
+export async function createAndAssignExecution(jiraIssueID: string = '', cycleId: any, branch: string, custom_cycle_name: string = '') {
+   const versionName = branch.split('/').pop();
+   const versionID = await this.getIdOfVersion(versionName);
+
+   if (jiraIssueID == '') {
+      console.error('No JIRA ID SET!');
+   }
+   if (cycleId == -1) {
+      console.log('Creating cycle ...');
+      const response = await this.createExecution(jiraIssueID, await this.createCycle(branch, custom_cycle_name), versionID);
+      return response;
+   } else {
+      const response = await this.createExecution(jiraIssueID, cycleId, versionID);
+      return response;
+   }
+}
+
+export async function createExecution(jiraIssueID: string = '', cycleId: any = -1, versionID: any = -1) {
+   let body: Object = {};
+   if (jiraIssueID == '') {
+      console.error('No JIRA ID SET!');
    };
-   const body = { "status": { "id": -1 }, "projectId": 10000, "issueId": jiraID, "cycleId": "-1", "versionId": -1, "assigneeType": "currentUser" };
+   if (cycleId == -1 && versionID != -1) {
+      body = { "status": { "id": -1 }, "projectId": jiraProjectID, "issueId": jiraIssueID, "cycleId": -1, "versionId": versionID, "assigneeType": "currentUser" };
+   }
+   if (cycleId == -1 && versionID == -1) {
+      body = { "status": { "id": -1 }, "projectId": jiraProjectID, "issueId": jiraIssueID, "cycleId": -1, "versionId": -1, "assigneeType": "currentUser" };
+   }
+   if (cycleId != -1 && versionID != -1) {
+      body = { "status": { "id": -1 }, "projectId": jiraProjectID, "issueId": jiraIssueID, "cycleId": cycleId, "versionId": versionID, "assigneeType": "currentUser" };
+   }
+
    try {
-      const data = await apicall.postData('/public/rest/api/1.0/execution', body);
+      const data = await apicall.postData(ZephyrApiVersion + '/execution', body);
       const json = JSON.parse(data);
       return json['execution']['id'];
    } catch (err) {
-      console.log(err);
+      console.log('Execution error:', err);
    }
-
 }
 
-// createExecution()
+// createExecution('24452','4c544096-cb8a-4d5f-9030-a31ae60e44a6','10737');
+
 export async function bulkEditExecs(execs: Array<string>, status: boolean, pending: boolean = false, unexecuted: boolean = false) {
    let body: any;
    if (unexecuted == true) {
@@ -77,7 +204,7 @@ export async function bulkEditExecs(execs: Array<string>, status: boolean, pendi
    else if (status == false && pending == true) {
       body = { "executions": execs, "status": 3, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": false, "stepStatus": 3 };
    }
-   await apicall.postData('/public/rest/api/1.0/executions', body);
+   await apicall.postData(ZephyrApiVersion + '/executions', body);
 }
 
 export async function bulkEditSteps(exec: string, status: boolean) {
@@ -88,15 +215,14 @@ export async function bulkEditSteps(exec: string, status: boolean) {
    } else if (status == false) {
       body = { "executions": execs, "status": -1, "clearDefectMappingFlag": false, "testStepStatusChangeFlag": true, "stepStatus": 2 };
    }
-   await apicall.postData('/public/rest/api/1.0/executions', body);
+   await apicall.postData(ZephyrApiVersion + '/executions', body);
 }
-
 
 export async function putStepResult(execId: string, issueId: string, stepResultId: string, resultOfTest: string, console_log: string = 'Passed.') {
    const body = { "executionId": execId, "issueId": issueId, "comment": console_log, "status": { "id": resultOfTest, "description": console_log } };
    await new Promise<any>((resolve) => {
       try {
-         apicall.putData('/public/rest/api/1.0/stepresult/' + stepResultId, body).then(function (response: any) {
+         apicall.putData(ZephyrApiVersion + '/stepresult/' + stepResultId, body).then(function (response: any) {
             resolve(response);
          });
       } catch (err) {
@@ -106,8 +232,8 @@ export async function putStepResult(execId: string, issueId: string, stepResultI
 }
 
 export async function updateStepResult(obj: any, issueId: string, execId: string) {
-   let data = await apicall.getData('/public/rest/api/1.0/teststep/' + issueId + '?projectId=10000');
-   let stepResult = await apicall.getData('/public/rest/api/1.0/stepresult/search?executionId=' + execId + '&issueId=' + issueId + '&isOrdered=' + true);
+   let data = await apicall.getData(ZephyrApiVersion + '/teststep/' + issueId + '?projectId=' + jiraProjectID);
+   let stepResult = await apicall.getData(ZephyrApiVersion + '/stepresult/search?executionId=' + execId + '&issueId=' + issueId + '&isOrdered=' + true);
 
    data = JSON.parse(data);
    stepResult = JSON.parse(stepResult);
@@ -149,6 +275,7 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
       console.error("Not matched it, please compare test it('description') definition and JIRA steps definition!");
    }
 }
+
 export async function execs(path = '../cross-app/reports/jsons/') {
    let i = 0;
    async function getFiles() {
@@ -191,4 +318,3 @@ export async function getFilesData(path: string = '../cross-app/reports/jsons/')
    }
    return [data, crosids];
 }
-

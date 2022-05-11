@@ -44,7 +44,7 @@ var auth = require('./jwt-auth');
 // import http from "http";
 var request = require("request");
 // const fetch = require('node-fetch');
-function getJiraData(issueIdOrKey, login, api_token) {
+function getJiraData(urlParams, login, api_token) {
     if (login === void 0) { login = "pollak@bart.sk"; }
     if (api_token === void 0) { api_token = config.pollak.jira_token; }
     return __awaiter(this, void 0, void 0, function () {
@@ -59,7 +59,7 @@ function getJiraData(issueIdOrKey, login, api_token) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    url = 'https://crossuite.atlassian.net/rest/api/3/issue/' + issueIdOrKey;
+                    url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
                     options = {
                         method: 'GET',
                         headers: {
