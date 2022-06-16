@@ -318,3 +318,29 @@ export async function getFilesData(path: string = '../cross-app/reports/jsons/')
    }
    return [data, crosids];
 }
+
+export async function updateJiraIssueStatus(issueCrosID: string, status: number) {
+   let body: any;
+   const urlParams = 'issue/' + issueCrosID + '/transitions';
+
+   // passed
+   if (status == 1) {
+      body = { "transition": { "id": "51" } };
+   }
+   // fail
+   if (status == 0) {
+      body = { "transition": { "id": "41" } };
+   }
+   // skipped
+   if (status == 2) {
+      body = { "transition": { "id": "91" } };
+   }
+
+   try {
+      await apicall.postJiraData(urlParams, body);
+      return true;
+   } catch {
+      console.error("Status of Jira issue is not updated!");
+      return false;
+   }
+}

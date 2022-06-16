@@ -37,6 +37,7 @@ export async function main() {
       let crossId: string = datas.getJiraCrosId(obj['description']);
       let issueId: string = await datas.getIsseuId(crossId);
 
+      console.log(crossId)
       await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(async function (cycleId: any) {
          try {
             await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function (response: string) {
@@ -81,18 +82,22 @@ export async function main() {
                } else if (res == true) {
                   passedExecs[x] = response;
                   x = x + 1;
+                  await datas.updateJiraIssueStatus(crossId, 1);
                }
                if (wip == true && count_pending_its != index.length) {
                   if (res == false) {
                      failedExecs[indexOfFailedExecs] = response;
                      indexOfFailedExecs = indexOfFailedExecs + 1;
+                     await datas.updateJiraIssueStatus(crossId, 0);
                   } else {
                      pendingExecs[z] = response;
                      z = z + 1;
+                     await datas.updateJiraIssueStatus(crossId, 1);
                   }
                } else if (count_pending_its == index.length) {
                   unexecutedExecs[unexecutedExecsIndex] = response;
                   unexecutedExecsIndex = unexecutedExecsIndex + 1;
+                  await datas.updateJiraIssueStatus(crossId, 2);
                }
             });
          } catch (err) {

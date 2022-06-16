@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.updateJiraIssueStatus = exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var ZephyrApiVersion = '/public/rest/api/1.0';
 var jiraProjectID = 10000;
 var apicall = require('./apicall');
@@ -188,7 +188,6 @@ function getCycleId(branch, cycleName, projectId) {
                     versionName = splittedVersion[1];
                     if (cycleName == '') {
                         cycleName = splittedVersion[0];
-                        console.log(cycleName);
                     }
                     return [4 /*yield*/, getIdOfVersion(versionName).then(function (versionID) {
                             return __awaiter(this, void 0, void 0, function () {
@@ -555,3 +554,39 @@ function getFilesData(path) {
     });
 }
 exports.getFilesData = getFilesData;
+function updateJiraIssueStatus(issueCrosID, status) {
+    return __awaiter(this, void 0, void 0, function () {
+        var body, urlParams, _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    urlParams = 'issue/' + issueCrosID + '/transitions';
+                    // passed
+                    if (status == 1) {
+                        body = { "transition": { "id": "51" } };
+                    }
+                    // fail
+                    if (status == 0) {
+                        body = { "transition": { "id": "41" } };
+                    }
+                    // skipped
+                    if (status == 2) {
+                        body = { "transition": { "id": "91" } };
+                    }
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, apicall.postJiraData(urlParams, body)];
+                case 2:
+                    _b.sent();
+                    return [2 /*return*/, true];
+                case 3:
+                    _a = _b.sent();
+                    console.error("Status of Jira issue is not updated!");
+                    return [2 /*return*/, false];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.updateJiraIssueStatus = updateJiraIssueStatus;
