@@ -84,7 +84,6 @@ function main() {
                                     return [4 /*yield*/, datas.getIsseuId(crossId)];
                                 case 1:
                                     issueId = _c.sent();
-                                    console.log(crossId);
                                     return [4 /*yield*/, datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(function (cycleId) {
                                             return __awaiter(this, void 0, void 0, function () {
                                                 var err_1;

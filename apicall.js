@@ -89,7 +89,6 @@ function postJiraData(urlParams, body, login, api_token) {
         function fetchpost() {
             return new Promise(function (resolve) {
                 request(url, options, function (error, response, body) {
-                    console.log(response.body);
                     resolve(response.body);
                 });
             });

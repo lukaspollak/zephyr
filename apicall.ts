@@ -50,7 +50,6 @@ export async function postJiraData(urlParams: string, body: any, login = "pollak
     function fetchpost() {
         return new Promise<any>((resolve) => {
             request(url, options, function (error: any, response: any, body: any) {
-                console.log(response.body)
                 resolve(response.body);
             })
         });
