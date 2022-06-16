@@ -50,13 +50,13 @@ function main() {
             }
             return indexes;
         }
-        var _a, data, crossids, i, j, x, y, z, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, branch_proccess_argv, cycle_proccess_argv, unique, _loop_1;
+        var _a, data, crossids, i, j, x, indexOfFailedExecs, z, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, branch_proccess_argv, cycle_proccess_argv, unique, _loop_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, datas.getFilesData()];
                 case 1:
                     _a = _b.sent(), data = _a[0], crossids = _a[1];
-                    i = 0, j = 0, x = 0, y = 0, z = 0;
+                    i = 0, j = 0, x = 0, indexOfFailedExecs = 0, z = 0;
                     unexecutedExecsIndex = 0;
                     passedExecs = [''];
                     failedExecs = [''];
@@ -115,10 +115,10 @@ function main() {
                                                                                     }
                                                                                     if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 2];
                                                                                     if (wip != false) {
-                                                                                        y--;
+                                                                                        indexOfFailedExecs--;
                                                                                     }
                                                                                     else {
-                                                                                        failedExecs[y] = response;
+                                                                                        failedExecs[indexOfFailedExecs] = response;
                                                                                     }
                                                                                     ;
                                                                                     return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function () {
@@ -127,7 +127,7 @@ function main() {
                                                                                                 return __generator(this, function (_a) {
                                                                                                     switch (_a.label) {
                                                                                                         case 0:
-                                                                                                            y = y + 1;
+                                                                                                            indexOfFailedExecs = indexOfFailedExecs + 1;
                                                                                                             z_1 = 0;
                                                                                                             _a.label = 1;
                                                                                                         case 1:
@@ -167,8 +167,14 @@ function main() {
                                                                                     _a.label = 3;
                                                                                 case 3:
                                                                                     if (wip == true && count_pending_its != index.length) {
-                                                                                        pendingExecs[z] = response;
-                                                                                        z = z + 1;
+                                                                                        if (res == false) {
+                                                                                            failedExecs[indexOfFailedExecs] = response;
+                                                                                            indexOfFailedExecs = indexOfFailedExecs + 1;
+                                                                                        }
+                                                                                        else {
+                                                                                            pendingExecs[z] = response;
+                                                                                            z = z + 1;
+                                                                                        }
                                                                                     }
                                                                                     else if (count_pending_its == index.length) {
                                                                                         unexecutedExecs[unexecutedExecsIndex] = response;

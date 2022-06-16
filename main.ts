@@ -5,7 +5,7 @@ const fsPath = '../cross-app/reports';
 export async function main() {
    let [data, crossids] = await datas.getFilesData();
    //helps counter variables for cycles
-   let i = 0, j = 0, x = 0, y = 0, z = 0;
+   let i = 0, j = 0, x = 0, indexOfFailedExecs = 0, z = 0;
    let unexecutedExecsIndex = 0;
    let passedExecs: Array<string> = [''];
    let failedExecs: Array<string> = [''];
@@ -56,15 +56,17 @@ export async function main() {
                      wip = true;
                   }
                }
+               // if at minimum one test step failed and pending its is less than count of all its and no step is WIP 
+               // >> y--, so test exec hash is not added to failed tests array and place is cleared for next created failed execution in next while cycle
                if (res == false && count_pending_its != index.length) {
                   if (wip != false) {
-                     y--;
+                     indexOfFailedExecs--;
                   } else {
-                     failedExecs[y] = response;
+                     failedExecs[indexOfFailedExecs] = response;
                   };
 
                   await datas.bulkEditSteps(response, true).then(async function () {
-                     y = y + 1;
+                     indexOfFailedExecs = indexOfFailedExecs + 1;
                      for (let z = 0; z < index.length; z++) {
                         const obj2 = JSON.parse(data[index[z]]);
                         if (obj2['passed'] == false) {
@@ -81,8 +83,13 @@ export async function main() {
                   x = x + 1;
                }
                if (wip == true && count_pending_its != index.length) {
-                  pendingExecs[z] = response;
-                  z = z + 1;
+                  if (res == false) {
+                     failedExecs[indexOfFailedExecs] = response;
+                     indexOfFailedExecs = indexOfFailedExecs + 1;
+                  } else {
+                     pendingExecs[z] = response;
+                     z = z + 1;
+                  }
                } else if (count_pending_its == index.length) {
                   unexecutedExecs[unexecutedExecsIndex] = response;
                   unexecutedExecsIndex = unexecutedExecsIndex + 1;
