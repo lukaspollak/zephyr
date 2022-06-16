@@ -81,18 +81,22 @@ export async function main() {
                } else if (res == true) {
                   passedExecs[x] = response;
                   x = x + 1;
+                  await datas.updateJiraIssueStatus(crossId, 1);
                }
                if (wip == true && count_pending_its != index.length) {
                   if (res == false) {
                      failedExecs[indexOfFailedExecs] = response;
                      indexOfFailedExecs = indexOfFailedExecs + 1;
+                     await datas.updateJiraIssueStatus(crossId, 0);
                   } else {
                      pendingExecs[z] = response;
                      z = z + 1;
+                     await datas.updateJiraIssueStatus(crossId, 1);
                   }
                } else if (count_pending_its == index.length) {
                   unexecutedExecs[unexecutedExecsIndex] = response;
                   unexecutedExecsIndex = unexecutedExecsIndex + 1;
+                  await datas.updateJiraIssueStatus(crossId, 2);
                }
             });
          } catch (err) {

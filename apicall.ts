@@ -34,6 +34,34 @@ export async function getJiraData(urlParams, login = "pollak@bart.sk", api_token
     return res;
 };
 
+export async function postJiraData(urlParams: string, body: any, login = "pollak@bart.sk", api_token: string = config.pollak.jira_token) {
+    const url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
+    const options = {
+        method: 'POST',
+        headers: {
+            'Authorization': `Basic ${Buffer.from(
+                login + ':' + api_token
+            ).toString('base64')}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    };
+
+    function fetchpost() {
+        return new Promise<any>((resolve) => {
+            request(url, options, function (error: any, response: any, body: any) {
+                resolve(response.body);
+            })
+        });
+    }
+
+    const res = await fetchpost().then(function (result: any) {
+        return result;
+    })
+
+    return res;
+}
+
 export async function getData(extendeApiCallUrl: string = '/public/rest/api/1.0/teststep/15550?projectId=10000') {
     const JWT: string = auth.getJWT(extendeApiCallUrl);
     const accessKey: string = config[process.argv[2]].access_key;

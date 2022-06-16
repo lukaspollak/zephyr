@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.postData = exports.putData = exports.getData = exports.getJiraData = void 0;
+exports.postData = exports.putData = exports.getData = exports.postJiraData = exports.getJiraData = void 0;
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 var config = require('./config.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -82,6 +82,41 @@ function getJiraData(urlParams, login, api_token) {
 }
 exports.getJiraData = getJiraData;
 ;
+function postJiraData(urlParams, body, login, api_token) {
+    if (login === void 0) { login = "pollak@bart.sk"; }
+    if (api_token === void 0) { api_token = config.pollak.jira_token; }
+    return __awaiter(this, void 0, void 0, function () {
+        function fetchpost() {
+            return new Promise(function (resolve) {
+                request(url, options, function (error, response, body) {
+                    resolve(response.body);
+                });
+            });
+        }
+        var url, options, res;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
+                    options = {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': "Basic " + Buffer.from(login + ':' + api_token).toString('base64'),
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    };
+                    return [4 /*yield*/, fetchpost().then(function (result) {
+                            return result;
+                        })];
+                case 1:
+                    res = _a.sent();
+                    return [2 /*return*/, res];
+            }
+        });
+    });
+}
+exports.postJiraData = postJiraData;
 function getData(extendeApiCallUrl) {
     if (extendeApiCallUrl === void 0) { extendeApiCallUrl = '/public/rest/api/1.0/teststep/15550?projectId=10000'; }
     return __awaiter(this, void 0, void 0, function () {
