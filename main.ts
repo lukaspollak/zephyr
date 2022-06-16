@@ -37,7 +37,6 @@ export async function main() {
       let crossId: string = datas.getJiraCrosId(obj['description']);
       let issueId: string = await datas.getIsseuId(crossId);
 
-      console.log(crossId)
       await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(async function (cycleId: any) {
          try {
             await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function (response: string) {
