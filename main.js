@@ -113,13 +113,17 @@ function main() {
                                                                                             wip = true;
                                                                                         }
                                                                                     }
-                                                                                    if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 2];
-                                                                                    if (wip != false) {
-                                                                                        indexOfFailedExecs--;
-                                                                                    }
-                                                                                    else {
-                                                                                        failedExecs[indexOfFailedExecs] = response;
-                                                                                    }
+                                                                                    if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 5];
+                                                                                    if (!(wip != false)) return [3 /*break*/, 1];
+                                                                                    indexOfFailedExecs--;
+                                                                                    return [3 /*break*/, 3];
+                                                                                case 1:
+                                                                                    failedExecs[indexOfFailedExecs] = response;
+                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 0)];
+                                                                                case 2:
+                                                                                    _a.sent();
+                                                                                    _a.label = 3;
+                                                                                case 3:
                                                                                     ;
                                                                                     return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function () {
                                                                                             return __awaiter(this, void 0, void 0, function () {
@@ -156,43 +160,43 @@ function main() {
                                                                                                 });
                                                                                             });
                                                                                         })];
-                                                                                case 1:
+                                                                                case 4:
                                                                                     _a.sent();
-                                                                                    return [3 /*break*/, 4];
-                                                                                case 2:
-                                                                                    if (!(res == true)) return [3 /*break*/, 4];
+                                                                                    return [3 /*break*/, 7];
+                                                                                case 5:
+                                                                                    if (!(res == true)) return [3 /*break*/, 7];
                                                                                     passedExecs[x] = response;
                                                                                     x = x + 1;
                                                                                     return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 1)];
-                                                                                case 3:
+                                                                                case 6:
                                                                                     _a.sent();
-                                                                                    _a.label = 4;
-                                                                                case 4:
-                                                                                    if (!(wip == true && count_pending_its != index.length)) return [3 /*break*/, 9];
-                                                                                    if (!(res == false)) return [3 /*break*/, 6];
+                                                                                    _a.label = 7;
+                                                                                case 7:
+                                                                                    if (!(wip == true && count_pending_its != index.length)) return [3 /*break*/, 12];
+                                                                                    if (!(res == false)) return [3 /*break*/, 9];
                                                                                     failedExecs[indexOfFailedExecs] = response;
                                                                                     indexOfFailedExecs = indexOfFailedExecs + 1;
                                                                                     return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 0)];
-                                                                                case 5:
+                                                                                case 8:
                                                                                     _a.sent();
-                                                                                    return [3 /*break*/, 8];
-                                                                                case 6:
+                                                                                    return [3 /*break*/, 11];
+                                                                                case 9:
                                                                                     pendingExecs[z] = response;
                                                                                     z = z + 1;
                                                                                     return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 1)];
-                                                                                case 7:
-                                                                                    _a.sent();
-                                                                                    _a.label = 8;
-                                                                                case 8: return [3 /*break*/, 11];
-                                                                                case 9:
-                                                                                    if (!(count_pending_its == index.length)) return [3 /*break*/, 11];
-                                                                                    unexecutedExecs[unexecutedExecsIndex] = response;
-                                                                                    unexecutedExecsIndex = unexecutedExecsIndex + 1;
-                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 2)];
                                                                                 case 10:
                                                                                     _a.sent();
                                                                                     _a.label = 11;
-                                                                                case 11: return [2 /*return*/];
+                                                                                case 11: return [3 /*break*/, 14];
+                                                                                case 12:
+                                                                                    if (!(count_pending_its == index.length)) return [3 /*break*/, 14];
+                                                                                    unexecutedExecs[unexecutedExecsIndex] = response;
+                                                                                    unexecutedExecsIndex = unexecutedExecsIndex + 1;
+                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 2)];
+                                                                                case 13:
+                                                                                    _a.sent();
+                                                                                    _a.label = 14;
+                                                                                case 14: return [2 /*return*/];
                                                                             }
                                                                         });
                                                                     });

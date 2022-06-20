@@ -63,6 +63,7 @@ export async function main() {
                      indexOfFailedExecs--;
                   } else {
                      failedExecs[indexOfFailedExecs] = response;
+                     await datas.updateJiraIssueStatus(crossId, 0);
                   };
 
                   await datas.bulkEditSteps(response, true).then(async function () {
