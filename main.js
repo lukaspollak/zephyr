@@ -50,14 +50,14 @@ function main() {
             }
             return indexes;
         }
-        var _a, data, crossids, i, j, indexOfPassedExecs, indexOfFailedExecs, indexOdPendingExecs, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, branch_proccess_argv, cycle_proccess_argv, unique, _loop_1;
+        var _a, data, crossids, indexOfCycle, j, indexOfPassedExecs, indexOfFailedExecs, indexOdPendingExecs, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, branch_proccess_argv, cycle_proccess_argv, unique, _loop_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, datas.getFilesData()];
                 case 1:
                     _a = _b.sent(), data = _a[0], crossids = _a[1];
-                    i = 0, j = 0, indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOdPendingExecs = 0;
-                    unexecutedExecsIndex = 0;
+                    indexOfCycle = 0, j = 0;
+                    indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOdPendingExecs = 0, unexecutedExecsIndex = 0;
                     passedExecs = [''];
                     failedExecs = [''];
                     pendingExecs = [''];
@@ -78,7 +78,7 @@ function main() {
                         return __generator(this, function (_c) {
                             switch (_c.label) {
                                 case 0:
-                                    index = getAllIndexes(crossids, unique[i]);
+                                    index = getAllIndexes(crossids, unique[indexOfCycle]);
                                     obj = JSON.parse(data[index[0]]);
                                     crossId = datas.getJiraCrosId(obj['description']);
                                     return [4 /*yield*/, datas.getIsseuId(crossId)];
@@ -93,11 +93,11 @@ function main() {
                                                             _a.trys.push([0, 2, , 3]);
                                                             return [4 /*yield*/, datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(function (response) {
                                                                     return __awaiter(this, void 0, void 0, function () {
-                                                                        var res, wip, count_pending_its, count_failed_its, obj2;
+                                                                        var passed, wip, count_pending_its, count_failed_its, obj2;
                                                                         return __generator(this, function (_a) {
                                                                             switch (_a.label) {
                                                                                 case 0:
-                                                                                    res = true;
+                                                                                    passed = true;
                                                                                     wip = false;
                                                                                     count_pending_its = 0;
                                                                                     count_failed_its = 0;
@@ -106,15 +106,15 @@ function main() {
                                                                                         obj2 = JSON.parse(data[index[j]]);
                                                                                         if (obj2['passed'] == false && obj2['pending'] == false) {
                                                                                             count_failed_its++;
-                                                                                            res = false;
+                                                                                            passed = false;
                                                                                         }
                                                                                         if (obj2['pending'] == true) {
                                                                                             count_pending_its = count_pending_its + 1;
-                                                                                            res = false;
+                                                                                            passed = false;
                                                                                             wip = true;
                                                                                         }
                                                                                     }
-                                                                                    if (!(res == false && count_pending_its != index.length)) return [3 /*break*/, 3];
+                                                                                    if (!(passed == false && count_pending_its != index.length)) return [3 /*break*/, 3];
                                                                                     failedExecs[indexOfFailedExecs] = response;
                                                                                     indexOfFailedExecs++;
                                                                                     return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 0)];
@@ -158,7 +158,7 @@ function main() {
                                                                                     _a.sent();
                                                                                     return [3 /*break*/, 5];
                                                                                 case 3:
-                                                                                    if (!(res == true)) return [3 /*break*/, 5];
+                                                                                    if (!(passed == true)) return [3 /*break*/, 5];
                                                                                     passedExecs[indexOfPassedExecs] = response;
                                                                                     indexOfPassedExecs++;
                                                                                     return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 1)];
@@ -167,7 +167,7 @@ function main() {
                                                                                     _a.label = 5;
                                                                                 case 5:
                                                                                     if (!(wip == true && count_pending_its != index.length)) return [3 /*break*/, 10];
-                                                                                    if (!(res == false && count_failed_its > 0)) return [3 /*break*/, 7];
+                                                                                    if (!(passed == false && count_failed_its > 0)) return [3 /*break*/, 7];
                                                                                     failedExecs[indexOfFailedExecs] = response;
                                                                                     indexOfFailedExecs++;
                                                                                     return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 0)];
@@ -175,7 +175,7 @@ function main() {
                                                                                     _a.sent();
                                                                                     return [3 /*break*/, 9];
                                                                                 case 7:
-                                                                                    if (!(res == false && count_failed_its == 0)) return [3 /*break*/, 9];
+                                                                                    if (!(passed == false && count_failed_its == 0)) return [3 /*break*/, 9];
                                                                                     pendingExecs[indexOdPendingExecs] = response;
                                                                                     indexOdPendingExecs++;
                                                                                     return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 1)];
@@ -211,14 +211,14 @@ function main() {
                                 case 2:
                                     _c.sent();
                                     console.log("Importing", crossId);
-                                    i = i + 1;
+                                    indexOfCycle++;
                                     return [2 /*return*/];
                             }
                         });
                     };
                     _b.label = 2;
                 case 2:
-                    if (!(i < unique.length)) return [3 /*break*/, 4];
+                    if (!(indexOfCycle < unique.length)) return [3 /*break*/, 4];
                     return [5 /*yield**/, _loop_1()];
                 case 3:
                     _b.sent();
