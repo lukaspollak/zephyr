@@ -6,7 +6,7 @@ export async function main() {
    let [data, crossids] = await datas.getFilesData();
    //helps counter variables for cycles
    let indexOfCycle = 0, j = 0;
-   let indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOdPendingExecs = 0, unexecutedExecsIndex = 0;
+   let indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOfPendingExecs = 0, unexecutedExecsIndex = 0;
    let passedExecs: Array<string> = [''];
    let failedExecs: Array<string> = [''];
    let pendingExecs: Array<string> = [''];
@@ -77,6 +77,7 @@ export async function main() {
                         };
                      }
                   })
+                  
                } else if (passed == true) {
                   passedExecs[indexOfPassedExecs] = response;
                   indexOfPassedExecs++;
@@ -89,8 +90,8 @@ export async function main() {
                      indexOfFailedExecs++;
                      await datas.updateJiraIssueStatus(crossId, 0);
                   } else if (passed == false && count_failed_its == 0) {
-                     pendingExecs[indexOdPendingExecs] = response;
-                     indexOdPendingExecs++;
+                     pendingExecs[indexOfPendingExecs] = response;
+                     indexOfPendingExecs++;
                      await datas.updateJiraIssueStatus(crossId, 1);
                   }
                } else if (count_pending_its == index.length) {
