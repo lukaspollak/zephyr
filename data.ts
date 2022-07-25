@@ -1,16 +1,22 @@
 import { JsonObjectExpression, StringMappingType } from "typescript";
 import { getJiraData } from "./apicall";
-const ZephyrApiVersion = '/public/rest/api/1.0';
-const jiraProjectID = 10000;
-const apicall = require('./apicall');
-const testFolder = '../cross-app/reports/jsons';
 const fs = require('fs');
+const xml2js = require('xml2js');
+const ZephyrApiVersion: string = '/public/rest/api/1.0';
+const jiraProjectID: number = 10000;
+const apicall = require('./apicall');
+const testFolder: string = '../cross-app/reports/jsons';
+const be_testReport_xml: string = '../cross-node/coverage/junit.xml';
 
-export function getTestIT(description: String) {
-   const start_pos = 0;
-   const start_pos1 = description.indexOf('|');
-   const text_to_get = description.substring(start_pos, start_pos1);
-   return text_to_get;
+export function getTestIT(description: String, reporter = "selenium") {
+   if (reporter == "selenium") {
+      const start_pos = 0;
+      const start_pos1 = description.indexOf('|');
+      const text_to_get = description.substring(start_pos, start_pos1);
+      return text_to_get;
+   } else if (reporter == "jest") {
+
+   }
 }
 
 export function getJiraCrosId(description: String) {
@@ -276,49 +282,6 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
    }
 }
 
-export async function execs(path = '../cross-app/reports/jsons/') {
-   let i = 0;
-   async function getFiles() {
-      return new Promise<any>((resolve) => {
-         fs.readdir(testFolder, async (err: any, files: any[]) => {
-            resolve(files);
-         });
-      });
-   }
-   const res = await getFiles().then(function (result: any) {
-      return result;
-   });
-   return res;
-}
-
-export async function getFilesData(path: string = '../cross-app/reports/jsons/') {
-   const res = await execs();
-   let i: number = 0;
-   let j: number = 0;
-   let data: Array<string> = [];
-   let crosids: Array<string> = [];
-   async function getJson(file: any) {
-      return await new Promise<any>((resolve) => {
-         fs.readFile(path + file, 'utf8', async function (err: any, data: any) {
-            resolve(data);
-         });
-      });
-   }
-   const resJson = await getJson(res).then(function (result: any) {
-      return result;
-   });
-
-   while (i < res.length) {
-      data[i] = await getJson(res[i]).then(function (result: any) {
-         const obj = JSON.parse(result);
-         crosids[i] = getTestId(obj['description']);
-         i = i + 1;
-         return result;
-      });
-   }
-   return [data, crosids];
-}
-
 export async function updateJiraIssueStatus(issueCrosID: string, status: number) {
    let body: any;
    const urlParams = 'issue/' + issueCrosID + '/transitions';
@@ -344,3 +307,90 @@ export async function updateJiraIssueStatus(issueCrosID: string, status: number)
       return false;
    }
 }
+
+export async function execs(folder_path: string = testFolder) {
+   let i = 0;
+   async function getFiles() {
+      return new Promise<any>((resolve) => {
+         fs.readdir(folder_path, async (err: any, files: any[]) => {
+            resolve(files);
+         });
+      });
+   }
+   const res = await getFiles().then(function (result: any) {
+      return result;
+   });
+   return res;
+}
+
+export async function getFilesData(folder_path: string = '../cross-app/reports/jsons/') {
+   const res = await execs();
+   let i: number = 0;
+   let j: number = 0;
+   let data: Array<string> = [];
+   let crosids: Array<string> = [];
+   async function getJson(file: any) {
+      return await new Promise<any>((resolve) => {
+         fs.readFile(folder_path + file, 'utf8', async function (err: any, data: any) {
+            resolve(data);
+         });
+      });
+   }
+   // const resJson = await getJson(res).then(function (result: any) {
+   //    return result;
+   // });
+   while (i < res.length) {
+      data[i] = await getJson(res[i]).then(function (result: any) {
+         const obj = JSON.parse(result);
+         crosids[i] = getTestId(obj['description']);
+         i = i + 1;
+         return result;
+      });
+   }
+   return [data, crosids];
+}
+
+export async function getFile(xml_report_path: string = be_testReport_xml) {
+   return await new Promise<any>((resolve) => {
+      fs.readFile(xml_report_path, 'utf8', async function (err: any, data: any) {
+         xml2js.parseString(data, { mergeAttrs: true }, (err, result) => {
+            if (err) {
+               throw err;
+            }
+            const json = JSON.stringify(result);
+            const response = JSON.parse(json);
+
+            //response.testsuites['testsuite'][0].testcase[1]['name']
+            console.log(response.testsuites['testsuite'][1])
+         });
+      });
+   });
+}
+
+getFile();
+export function getJestReport() {
+   const xml = `< ?xml version="1.0" encoding="UTF-8" ?>
+            <user id="1">
+                <name>John Doe</name>
+                <email>john.doe@example.com</email>
+                <roles>
+                    <role>Member</role>
+                    <role>Admin</role>
+                </roles>
+                <admin>true</admin>
+            </user>`;
+   xml2js.parseString(xml, (err, result) => {
+      if (err) {
+         throw err;
+      }
+
+      // `result` is a JavaScript object
+      // convert it to a JSON string
+      const json = JSON.stringify(result, null, 4);
+
+      // log JSON string
+      console.log(json);
+   });
+}
+
+// getJestReport();

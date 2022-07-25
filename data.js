@@ -36,17 +36,24 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.updateJiraIssueStatus = exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getJestReport = exports.getFile = exports.getFilesData = exports.execs = exports.updateJiraIssueStatus = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+var fs = require('fs');
+var xml2js = require('xml2js');
 var ZephyrApiVersion = '/public/rest/api/1.0';
 var jiraProjectID = 10000;
 var apicall = require('./apicall');
 var testFolder = '../cross-app/reports/jsons';
-var fs = require('fs');
-function getTestIT(description) {
-    var start_pos = 0;
-    var start_pos1 = description.indexOf('|');
-    var text_to_get = description.substring(start_pos, start_pos1);
-    return text_to_get;
+var be_testReport_xml = '../cross-node/coverage/junit.xml';
+function getTestIT(description, reporter) {
+    if (reporter === void 0) { reporter = "selenium"; }
+    if (reporter == "selenium") {
+        var start_pos = 0;
+        var start_pos1 = description.indexOf('|');
+        var text_to_get = description.substring(start_pos, start_pos1);
+        return text_to_get;
+    }
+    else if (reporter == "jest") {
+    }
 }
 exports.getTestIT = getTestIT;
 function getJiraCrosId(description) {
@@ -463,97 +470,6 @@ function updateStepResult(obj, issueId, execId) {
     });
 }
 exports.updateStepResult = updateStepResult;
-function execs(path) {
-    if (path === void 0) { path = '../cross-app/reports/jsons/'; }
-    return __awaiter(this, void 0, void 0, function () {
-        function getFiles() {
-            return __awaiter(this, void 0, void 0, function () {
-                var _this = this;
-                return __generator(this, function (_a) {
-                    return [2 /*return*/, new Promise(function (resolve) {
-                            fs.readdir(testFolder, function (err, files) { return __awaiter(_this, void 0, void 0, function () {
-                                return __generator(this, function (_a) {
-                                    resolve(files);
-                                    return [2 /*return*/];
-                                });
-                            }); });
-                        })];
-                });
-            });
-        }
-        var i, res;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    i = 0;
-                    return [4 /*yield*/, getFiles().then(function (result) {
-                            return result;
-                        })];
-                case 1:
-                    res = _a.sent();
-                    return [2 /*return*/, res];
-            }
-        });
-    });
-}
-exports.execs = execs;
-function getFilesData(path) {
-    if (path === void 0) { path = '../cross-app/reports/jsons/'; }
-    return __awaiter(this, void 0, void 0, function () {
-        function getJson(file) {
-            return __awaiter(this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, new Promise(function (resolve) {
-                                fs.readFile(path + file, 'utf8', function (err, data) {
-                                    return __awaiter(this, void 0, void 0, function () {
-                                        return __generator(this, function (_a) {
-                                            resolve(data);
-                                            return [2 /*return*/];
-                                        });
-                                    });
-                                });
-                            })];
-                        case 1: return [2 /*return*/, _a.sent()];
-                    }
-                });
-            });
-        }
-        var res, i, j, data, crosids, resJson, _a, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0: return [4 /*yield*/, execs()];
-                case 1:
-                    res = _c.sent();
-                    i = 0;
-                    j = 0;
-                    data = [];
-                    crosids = [];
-                    return [4 /*yield*/, getJson(res).then(function (result) {
-                            return result;
-                        })];
-                case 2:
-                    resJson = _c.sent();
-                    _c.label = 3;
-                case 3:
-                    if (!(i < res.length)) return [3 /*break*/, 5];
-                    _a = data;
-                    _b = i;
-                    return [4 /*yield*/, getJson(res[i]).then(function (result) {
-                            var obj = JSON.parse(result);
-                            crosids[i] = getTestId(obj['description']);
-                            i = i + 1;
-                            return result;
-                        })];
-                case 4:
-                    _a[_b] = _c.sent();
-                    return [3 /*break*/, 3];
-                case 5: return [2 /*return*/, [data, crosids]];
-            }
-        });
-    });
-}
-exports.getFilesData = getFilesData;
 function updateJiraIssueStatus(issueCrosID, status) {
     return __awaiter(this, void 0, void 0, function () {
         var body, urlParams, _a;
@@ -590,3 +506,134 @@ function updateJiraIssueStatus(issueCrosID, status) {
     });
 }
 exports.updateJiraIssueStatus = updateJiraIssueStatus;
+function execs(folder_path) {
+    if (folder_path === void 0) { folder_path = testFolder; }
+    return __awaiter(this, void 0, void 0, function () {
+        function getFiles() {
+            return __awaiter(this, void 0, void 0, function () {
+                var _this = this;
+                return __generator(this, function (_a) {
+                    return [2 /*return*/, new Promise(function (resolve) {
+                            fs.readdir(folder_path, function (err, files) { return __awaiter(_this, void 0, void 0, function () {
+                                return __generator(this, function (_a) {
+                                    resolve(files);
+                                    return [2 /*return*/];
+                                });
+                            }); });
+                        })];
+                });
+            });
+        }
+        var i, res;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    i = 0;
+                    return [4 /*yield*/, getFiles().then(function (result) {
+                            return result;
+                        })];
+                case 1:
+                    res = _a.sent();
+                    return [2 /*return*/, res];
+            }
+        });
+    });
+}
+exports.execs = execs;
+function getFilesData(folder_path) {
+    if (folder_path === void 0) { folder_path = '../cross-app/reports/jsons/'; }
+    return __awaiter(this, void 0, void 0, function () {
+        function getJson(file) {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, new Promise(function (resolve) {
+                                fs.readFile(folder_path + file, 'utf8', function (err, data) {
+                                    return __awaiter(this, void 0, void 0, function () {
+                                        return __generator(this, function (_a) {
+                                            resolve(data);
+                                            return [2 /*return*/];
+                                        });
+                                    });
+                                });
+                            })];
+                        case 1: return [2 /*return*/, _a.sent()];
+                    }
+                });
+            });
+        }
+        var res, i, j, data, crosids, _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0: return [4 /*yield*/, execs()];
+                case 1:
+                    res = _c.sent();
+                    i = 0;
+                    j = 0;
+                    data = [];
+                    crosids = [];
+                    _c.label = 2;
+                case 2:
+                    if (!(i < res.length)) return [3 /*break*/, 4];
+                    _a = data;
+                    _b = i;
+                    return [4 /*yield*/, getJson(res[i]).then(function (result) {
+                            var obj = JSON.parse(result);
+                            crosids[i] = getTestId(obj['description']);
+                            i = i + 1;
+                            return result;
+                        })];
+                case 3:
+                    _a[_b] = _c.sent();
+                    return [3 /*break*/, 2];
+                case 4: return [2 /*return*/, [data, crosids]];
+            }
+        });
+    });
+}
+exports.getFilesData = getFilesData;
+function getFile(xml_report_path) {
+    if (xml_report_path === void 0) { xml_report_path = be_testReport_xml; }
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, new Promise(function (resolve) {
+                        fs.readFile(xml_report_path, 'utf8', function (err, data) {
+                            return __awaiter(this, void 0, void 0, function () {
+                                return __generator(this, function (_a) {
+                                    xml2js.parseString(data, { mergeAttrs: true }, function (err, result) {
+                                        if (err) {
+                                            throw err;
+                                        }
+                                        var json = JSON.stringify(result);
+                                        var response = JSON.parse(json);
+                                        //response.testsuites['testsuite'][0].testcase[1]['name']
+                                        console.log(response.testsuites['testsuite'][1]);
+                                    });
+                                    return [2 /*return*/];
+                                });
+                            });
+                        });
+                    })];
+                case 1: return [2 /*return*/, _a.sent()];
+            }
+        });
+    });
+}
+exports.getFile = getFile;
+getFile();
+function getJestReport() {
+    var xml = "< ?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n            <user id=\"1\">\n                <name>John Doe</name>\n                <email>john.doe@example.com</email>\n                <roles>\n                    <role>Member</role>\n                    <role>Admin</role>\n                </roles>\n                <admin>true</admin>\n            </user>";
+    xml2js.parseString(xml, function (err, result) {
+        if (err) {
+            throw err;
+        }
+        // `result` is a JavaScript object
+        // convert it to a JSON string
+        var json = JSON.stringify(result, null, 4);
+        // log JSON string
+        console.log(json);
+    });
+}
+exports.getJestReport = getJestReport;
+// getJestReport();
