@@ -50,191 +50,142 @@ function main() {
             }
             return indexes;
         }
-        var _a, data, crossids, indexOfCycle, j, indexOfPassedExecs, indexOfFailedExecs, indexOdPendingExecs, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, branch_proccess_argv, cycle_proccess_argv, unique, _loop_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0: return [4 /*yield*/, datas.getFilesData()];
-                case 1:
-                    _a = _b.sent(), data = _a[0], crossids = _a[1];
+        var indexOfCycle, j, indexOfPassedExecs, indexOfFailedExecs, indexOfPendingExecs, unexecutedExecsIndex, passedExecs, failedExecs, pendingExecs, unexecutedExecs, branch_proccess_argv, cycle_proccess_argv, reporter_process_argv, data, crossids, unique, index, obj, crossId, issueId;
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
                     indexOfCycle = 0, j = 0;
-                    indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOdPendingExecs = 0, unexecutedExecsIndex = 0;
+                    indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOfPendingExecs = 0, unexecutedExecsIndex = 0;
                     passedExecs = [''];
                     failedExecs = [''];
                     pendingExecs = [''];
                     unexecutedExecs = [''];
-                    branch_proccess_argv = process.argv[3];
-                    cycle_proccess_argv = process.argv[4];
+                    branch_proccess_argv = process.argv[4];
+                    cycle_proccess_argv = process.argv[5];
+                    reporter_process_argv = process.argv[3];
                     if (branch_proccess_argv == undefined) {
                         branch_proccess_argv = "";
-                        console.warn("Branch is not filled in console arguments!");
+                        console.warn("Branch is not filled in command arguments!");
                     }
                     if (cycle_proccess_argv == undefined) {
                         cycle_proccess_argv = "";
-                        console.warn("Cycle name is not filled in console arguments!");
+                        console.warn("Cycle name is not filled in command arguments!");
                     }
-                    unique = Array.from(new Set(crossids));
-                    _loop_1 = function () {
-                        var index, obj, crossId, issueId;
-                        return __generator(this, function (_c) {
-                            switch (_c.label) {
-                                case 0:
-                                    index = getAllIndexes(crossids, unique[indexOfCycle]);
-                                    obj = JSON.parse(data[index[0]]);
-                                    crossId = datas.getJiraCrosId(obj['description']);
-                                    return [4 /*yield*/, datas.getIsseuId(crossId)];
-                                case 1:
-                                    issueId = _c.sent();
-                                    return [4 /*yield*/, datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(function (cycleId) {
-                                            return __awaiter(this, void 0, void 0, function () {
-                                                var err_1;
-                                                return __generator(this, function (_a) {
-                                                    switch (_a.label) {
-                                                        case 0:
-                                                            _a.trys.push([0, 2, , 3]);
-                                                            return [4 /*yield*/, datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(function (response) {
-                                                                    return __awaiter(this, void 0, void 0, function () {
-                                                                        var passed, wip, count_pending_its, count_failed_its, obj2;
-                                                                        return __generator(this, function (_a) {
-                                                                            switch (_a.label) {
-                                                                                case 0:
-                                                                                    passed = true;
-                                                                                    wip = false;
-                                                                                    count_pending_its = 0;
-                                                                                    count_failed_its = 0;
-                                                                                    // let failStepId: string;
-                                                                                    for (j = 0; j < index.length; j++) {
-                                                                                        obj2 = JSON.parse(data[index[j]]);
-                                                                                        if (obj2['passed'] == false && obj2['pending'] == false) {
-                                                                                            count_failed_its++;
-                                                                                            passed = false;
-                                                                                        }
-                                                                                        if (obj2['pending'] == true) {
-                                                                                            count_pending_its = count_pending_its + 1;
-                                                                                            passed = false;
-                                                                                            wip = true;
-                                                                                        }
-                                                                                    }
-                                                                                    if (!(passed == false && count_pending_its != index.length)) return [3 /*break*/, 3];
-                                                                                    failedExecs[indexOfFailedExecs] = response;
-                                                                                    indexOfFailedExecs++;
-                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 0)];
-                                                                                case 1:
-                                                                                    _a.sent();
-                                                                                    return [4 /*yield*/, datas.bulkEditSteps(response, true).then(function () {
-                                                                                            return __awaiter(this, void 0, void 0, function () {
-                                                                                                var z, obj2, err_2;
-                                                                                                return __generator(this, function (_a) {
-                                                                                                    switch (_a.label) {
-                                                                                                        case 0:
-                                                                                                            z = 0;
-                                                                                                            _a.label = 1;
-                                                                                                        case 1:
-                                                                                                            if (!(z < index.length)) return [3 /*break*/, 7];
-                                                                                                            obj2 = JSON.parse(data[index[z]]);
-                                                                                                            if (!(obj2['passed'] == false)) return [3 /*break*/, 5];
-                                                                                                            _a.label = 2;
-                                                                                                        case 2:
-                                                                                                            _a.trys.push([2, 4, , 5]);
-                                                                                                            return [4 /*yield*/, datas.updateStepResult(obj2, issueId, response)];
-                                                                                                        case 3:
-                                                                                                            _a.sent();
-                                                                                                            return [3 /*break*/, 5];
-                                                                                                        case 4:
-                                                                                                            err_2 = _a.sent();
-                                                                                                            console.error(err_2);
-                                                                                                            return [3 /*break*/, 5];
-                                                                                                        case 5:
-                                                                                                            ;
-                                                                                                            _a.label = 6;
-                                                                                                        case 6:
-                                                                                                            z++;
-                                                                                                            return [3 /*break*/, 1];
-                                                                                                        case 7: return [2 /*return*/];
-                                                                                                    }
-                                                                                                });
-                                                                                            });
-                                                                                        })];
-                                                                                case 2:
-                                                                                    _a.sent();
-                                                                                    return [3 /*break*/, 5];
-                                                                                case 3:
-                                                                                    if (!(passed == true)) return [3 /*break*/, 5];
-                                                                                    passedExecs[indexOfPassedExecs] = response;
-                                                                                    indexOfPassedExecs++;
-                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 1)];
-                                                                                case 4:
-                                                                                    _a.sent();
-                                                                                    _a.label = 5;
-                                                                                case 5:
-                                                                                    if (!(wip == true && count_pending_its != index.length)) return [3 /*break*/, 10];
-                                                                                    if (!(passed == false && count_failed_its > 0)) return [3 /*break*/, 7];
-                                                                                    failedExecs[indexOfFailedExecs] = response;
-                                                                                    indexOfFailedExecs++;
-                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 0)];
-                                                                                case 6:
-                                                                                    _a.sent();
-                                                                                    return [3 /*break*/, 9];
-                                                                                case 7:
-                                                                                    if (!(passed == false && count_failed_its == 0)) return [3 /*break*/, 9];
-                                                                                    pendingExecs[indexOdPendingExecs] = response;
-                                                                                    indexOdPendingExecs++;
-                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 1)];
-                                                                                case 8:
-                                                                                    _a.sent();
-                                                                                    _a.label = 9;
-                                                                                case 9: return [3 /*break*/, 12];
-                                                                                case 10:
-                                                                                    if (!(count_pending_its == index.length)) return [3 /*break*/, 12];
-                                                                                    unexecutedExecs[unexecutedExecsIndex] = response;
-                                                                                    unexecutedExecsIndex = unexecutedExecsIndex + 1;
-                                                                                    return [4 /*yield*/, datas.updateJiraIssueStatus(crossId, 2)];
-                                                                                case 11:
-                                                                                    _a.sent();
-                                                                                    _a.label = 12;
-                                                                                case 12: return [2 /*return*/];
-                                                                            }
-                                                                        });
-                                                                    });
-                                                                })];
-                                                        case 1:
-                                                            _a.sent();
-                                                            return [3 /*break*/, 3];
-                                                        case 2:
-                                                            err_1 = _a.sent();
-                                                            console.log(err_1);
-                                                            return [3 /*break*/, 3];
-                                                        case 3: return [2 /*return*/];
-                                                    }
-                                                });
-                                            });
-                                        })];
-                                case 2:
-                                    _c.sent();
-                                    console.log("Importing", crossId);
-                                    indexOfCycle++;
-                                    return [2 /*return*/];
-                            }
-                        });
-                    };
-                    _b.label = 2;
+                    crossids = [];
+                    if (!(reporter_process_argv == "selenium")) return [3 /*break*/, 2];
+                    return [4 /*yield*/, datas.getFilesJsonData()];
+                case 1:
+                    // default
+                    _a = _c.sent(), data = _a[0], crossids = _a[1]; // load data from JSONs files of selenium reporter (reports/json)
+                    return [3 /*break*/, 4];
                 case 2:
-                    if (!(indexOfCycle < unique.length)) return [3 /*break*/, 4];
-                    return [5 /*yield**/, _loop_1()];
+                    if (!(reporter_process_argv == "jest")) return [3 /*break*/, 4];
+                    return [4 /*yield*/, datas.getXmlFilesJsonData()];
                 case 3:
-                    _b.sent();
-                    return [3 /*break*/, 2];
-                case 4: return [4 /*yield*/, datas.bulkEditExecs(passedExecs, true)];
+                    // custom
+                    _b = _c.sent(), data = _b[0], crossids = _b[1]; // load data from JSONs files of jest reporter (coverage/)
+                    _c.label = 4;
+                case 4:
+                    unique = Array.from(new Set(crossids));
+                    _c.label = 5;
                 case 5:
-                    _b.sent();
-                    return [4 /*yield*/, datas.bulkEditExecs(failedExecs, false)];
+                    if (!(indexOfCycle < unique.length)) return [3 /*break*/, 7];
+                    index = getAllIndexes(crossids, unique[indexOfCycle]);
+                    obj = void 0;
+                    console.log('Index:' + index);
+                    if (reporter_process_argv == "selenium") {
+                        obj = JSON.parse(data[index[0]]);
+                    }
+                    else if (reporter_process_argv == "jest") {
+                        obj = data[index[0]];
+                    }
+                    console.log('obj:' + obj);
+                    crossId = datas.getJiraCrosId(obj['description']);
+                    console.log('crossId:' + crossId);
+                    return [4 /*yield*/, datas.getIsseuId(crossId)];
                 case 6:
-                    _b.sent();
-                    return [4 /*yield*/, datas.bulkEditExecs(pendingExecs, false, true)];
-                case 7:
-                    _b.sent();
-                    return [4 /*yield*/, datas.bulkEditExecs(unexecutedExecs, false, false, true)];
+                    issueId = _c.sent();
+                    console.log('issueId:' + issueId);
+                    // await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(async function (cycleId: any) {
+                    //    try {
+                    //       await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function (response: string) {
+                    //          let passed = true;
+                    //          let wip = false;
+                    //          let count_pending_its = 0;
+                    //          let count_failed_its = 0;
+                    //          // let failStepId: string;
+                    //          for (j = 0; j < index.length; j++) {
+                    //             const obj2 = JSON.parse(data[index[j]]);
+                    //             if (obj2['passed'] == false && obj2['pending'] == false) {
+                    //                count_failed_its++;
+                    //                passed = false;
+                    //             }
+                    //             if (obj2['pending'] == true) {
+                    //                count_pending_its++;
+                    //                passed = false;
+                    //                wip = true;
+                    //             }
+                    //          }
+                    //          // if at minimum one test step failed and pending its is less than count of all its and no step is WIP 
+                    //          // >> y--, so test exec hash is not added to failed tests array and place is cleared for next created failed execution in next while cycle
+                    //          if (passed == false && count_pending_its != index.length) {
+                    //             failedExecs[indexOfFailedExecs] = response;
+                    //             indexOfFailedExecs++;
+                    //             await datas.updateJiraIssueStatus(crossId, 0);
+                    //             await datas.bulkEditSteps(response, true).then(async function () {
+                    //                for (let z = 0; z < index.length; z++) {
+                    //                   const obj2 = JSON.parse(data[index[z]]);
+                    //                   if (obj2['passed'] == false) {
+                    //                      try {
+                    //                         await datas.updateStepResult(obj2, issueId, response);
+                    //                      } catch (err) {
+                    //                         console.error(err);
+                    //                      }
+                    //                   };
+                    //                }
+                    //             })
+                    //          } else if (passed == true) {
+                    //             passedExecs[indexOfPassedExecs] = response;
+                    //             indexOfPassedExecs++;
+                    //             await datas.updateJiraIssueStatus(crossId, 1);
+                    //          }
+                    //          if (wip == true && count_pending_its != index.length) {
+                    //             if (passed == false && count_failed_its > 0) {
+                    //                failedExecs[indexOfFailedExecs] = response;
+                    //                indexOfFailedExecs++;
+                    //                await datas.updateJiraIssueStatus(crossId, 0);
+                    //             } else if (passed == false && count_failed_its == 0) {
+                    //                pendingExecs[indexOfPendingExecs] = response;
+                    //                indexOfPendingExecs++;
+                    //                await datas.updateJiraIssueStatus(crossId, 1);
+                    //             }
+                    //          } else if (count_pending_its == index.length) {
+                    //             unexecutedExecs[unexecutedExecsIndex] = response;
+                    //             unexecutedExecsIndex = unexecutedExecsIndex + 1;
+                    //             await datas.updateJiraIssueStatus(crossId, 2);
+                    //          }
+                    //       });
+                    //    } catch (err) {
+                    //       console.log(err);
+                    //       //console.error("Error:", err);
+                    //    }
+                    // })
+                    console.log("Importing", crossId);
+                    indexOfCycle++;
+                    return [3 /*break*/, 5];
+                case 7: return [4 /*yield*/, datas.bulkEditExecs(passedExecs, true)];
                 case 8:
-                    _b.sent();
+                    _c.sent();
+                    return [4 /*yield*/, datas.bulkEditExecs(failedExecs, false)];
+                case 9:
+                    _c.sent();
+                    return [4 /*yield*/, datas.bulkEditExecs(pendingExecs, false, true)];
+                case 10:
+                    _c.sent();
+                    return [4 /*yield*/, datas.bulkEditExecs(unexecutedExecs, false, false, true)];
+                case 11:
+                    _c.sent();
                     // try {
                     //    fs.unlinkSync(fsPath)
                     //    //file removed

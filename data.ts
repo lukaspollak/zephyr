@@ -319,10 +319,9 @@ export async function execs(folder_path: string = testFolder) {
    return res;
 }
 
-export async function getFilesData(folder_path: string = '../cross-app/reports/jsons/') {
+export async function getFilesJsonData(folder_path: string = testFolder + '/') {
    const res = await execs();
    let i: number = 0;
-   let j: number = 0;
    let data: Array<string> = [];
    let crosids: Array<string> = [];
    async function getJson(file: any) {
@@ -365,8 +364,16 @@ export async function getXmlFilesJsonData(xml_report_path: string = be_testRepor
       });
    }
 
+   let i: number = 0;
+   let crosids: Array<string> = [];
+   const data = await getJson();
+   const res = data.testsuites['testsuite'];
+   while (i < res.length) {
+      // all tests which will be executed will assign to crosids
+      crosids[i] = getTestId(res[i]['name'][0]);
+      i++;
+   };
    // Result JSON format example
    // data.testsuites['testsuite'][0].testcase[1]['name']
-   const data = await getJson();
-   return data;
+   return [data.testsuites['testsuite'], crosids];
 }

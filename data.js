@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getXmlFilesJsonData = exports.getFilesData = exports.execs = exports.updateJiraIssueStatus = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getXmlFilesJsonData = exports.getFilesJsonData = exports.execs = exports.updateJiraIssueStatus = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var fs = require('fs');
 var xml2js = require('xml2js');
 var ZephyrApiVersion = '/public/rest/api/1.0';
@@ -535,8 +535,8 @@ function execs(folder_path) {
     });
 }
 exports.execs = execs;
-function getFilesData(folder_path) {
-    if (folder_path === void 0) { folder_path = '../cross-app/reports/jsons/'; }
+function getFilesJsonData(folder_path) {
+    if (folder_path === void 0) { folder_path = testFolder + '/'; }
     return __awaiter(this, void 0, void 0, function () {
         function getJson(file) {
             return __awaiter(this, void 0, void 0, function () {
@@ -557,14 +557,13 @@ function getFilesData(folder_path) {
                 });
             });
         }
-        var res, i, j, data, crosids, _a, _b;
+        var res, i, data, crosids, _a, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0: return [4 /*yield*/, execs()];
                 case 1:
                     res = _c.sent();
                     i = 0;
-                    j = 0;
                     data = [];
                     crosids = [];
                     _c.label = 2;
@@ -586,7 +585,7 @@ function getFilesData(folder_path) {
         });
     });
 }
-exports.getFilesData = getFilesData;
+exports.getFilesJsonData = getFilesJsonData;
 function getXmlFilesJsonData(xml_report_path) {
     if (xml_report_path === void 0) { xml_report_path = be_testReport_xml; }
     return __awaiter(this, void 0, void 0, function () {
@@ -619,13 +618,25 @@ function getXmlFilesJsonData(xml_report_path) {
                 });
             });
         }
-        var data;
+        var i, crosids, data, res;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, getJson()];
+                case 0:
+                    i = 0;
+                    crosids = [];
+                    return [4 /*yield*/, getJson()];
                 case 1:
                     data = _a.sent();
-                    return [2 /*return*/, data];
+                    res = data.testsuites['testsuite'];
+                    while (i < res.length) {
+                        // all tests which will be executed will assign to crosids
+                        crosids[i] = getTestId(res[i]['name'][0]);
+                        i++;
+                    }
+                    ;
+                    // Result JSON format example
+                    // data.testsuites['testsuite'][0].testcase[1]['name']
+                    return [2 /*return*/, [data.testsuites['testsuite'], crosids]];
             }
         });
     });
