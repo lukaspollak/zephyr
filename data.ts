@@ -8,15 +8,11 @@ const apicall = require('./apicall');
 const testFolder: string = '../cross-app/reports/jsons';
 const be_testReport_xml: string = '../cross-node/coverage/junit.xml';
 
-export function getTestIT(description: String, reporter = "selenium") {
-   if (reporter == "selenium") {
-      const start_pos = 0;
-      const start_pos1 = description.indexOf('|');
-      const text_to_get = description.substring(start_pos, start_pos1);
-      return text_to_get;
-   } else if (reporter == "jest") {
-
-   }
+export function getTestIT(description: String) {
+   const start_pos = 0;
+   const start_pos1 = description.indexOf('|');
+   const text_to_get = description.substring(start_pos, start_pos1);
+   return text_to_get;
 }
 
 export function getJiraCrosId(description: String) {
@@ -350,47 +346,27 @@ export async function getFilesData(folder_path: string = '../cross-app/reports/j
    return [data, crosids];
 }
 
-export async function getFile(xml_report_path: string = be_testReport_xml) {
-   return await new Promise<any>((resolve) => {
-      fs.readFile(xml_report_path, 'utf8', async function (err: any, data: any) {
-         xml2js.parseString(data, { mergeAttrs: true }, (err, result) => {
-            if (err) {
-               throw err;
-            }
-            const json = JSON.stringify(result);
-            const response = JSON.parse(json);
-
-            //response.testsuites['testsuite'][0].testcase[1]['name']
-            console.log(response.testsuites['testsuite'][1])
+export async function getXmlFilesJsonData(xml_report_path: string = be_testReport_xml) {
+   async function getJson() {
+      return await new Promise<any>((resolve) => {
+         // read XML file from cross-node/coverage
+         fs.readFile(xml_report_path, 'utf8', async function (err: any, data: any) {
+            // parse XML as String
+            xml2js.parseString(data, { mergeAttrs: true }, (err, result) => {
+               if (err) {
+                  throw err;
+               }
+               // Stringify for convert to JSON format 
+               const json = JSON.stringify(result);
+               data = JSON.parse(json);
+               resolve(data)
+            });
          });
       });
-   });
+   }
+
+   // Result JSON format example
+   // data.testsuites['testsuite'][0].testcase[1]['name']
+   const data = await getJson();
+   return data;
 }
-
-getFile();
-export function getJestReport() {
-   const xml = `< ?xml version="1.0" encoding="UTF-8" ?>
-            <user id="1">
-                <name>John Doe</name>
-                <email>john.doe@example.com</email>
-                <roles>
-                    <role>Member</role>
-                    <role>Admin</role>
-                </roles>
-                <admin>true</admin>
-            </user>`;
-   xml2js.parseString(xml, (err, result) => {
-      if (err) {
-         throw err;
-      }
-
-      // `result` is a JavaScript object
-      // convert it to a JSON string
-      const json = JSON.stringify(result, null, 4);
-
-      // log JSON string
-      console.log(json);
-   });
-}
-
-// getJestReport();

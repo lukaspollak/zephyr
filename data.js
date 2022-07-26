@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getJestReport = exports.getFile = exports.getFilesData = exports.execs = exports.updateJiraIssueStatus = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
+exports.getXmlFilesJsonData = exports.getFilesData = exports.execs = exports.updateJiraIssueStatus = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
 var fs = require('fs');
 var xml2js = require('xml2js');
 var ZephyrApiVersion = '/public/rest/api/1.0';
@@ -44,16 +44,11 @@ var jiraProjectID = 10000;
 var apicall = require('./apicall');
 var testFolder = '../cross-app/reports/jsons';
 var be_testReport_xml = '../cross-node/coverage/junit.xml';
-function getTestIT(description, reporter) {
-    if (reporter === void 0) { reporter = "selenium"; }
-    if (reporter == "selenium") {
-        var start_pos = 0;
-        var start_pos1 = description.indexOf('|');
-        var text_to_get = description.substring(start_pos, start_pos1);
-        return text_to_get;
-    }
-    else if (reporter == "jest") {
-    }
+function getTestIT(description) {
+    var start_pos = 0;
+    var start_pos1 = description.indexOf('|');
+    var text_to_get = description.substring(start_pos, start_pos1);
+    return text_to_get;
 }
 exports.getTestIT = getTestIT;
 function getJiraCrosId(description) {
@@ -592,48 +587,47 @@ function getFilesData(folder_path) {
     });
 }
 exports.getFilesData = getFilesData;
-function getFile(xml_report_path) {
+function getXmlFilesJsonData(xml_report_path) {
     if (xml_report_path === void 0) { xml_report_path = be_testReport_xml; }
     return __awaiter(this, void 0, void 0, function () {
+        function getJson() {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, new Promise(function (resolve) {
+                                // read XML file from cross-node/coverage
+                                fs.readFile(xml_report_path, 'utf8', function (err, data) {
+                                    return __awaiter(this, void 0, void 0, function () {
+                                        return __generator(this, function (_a) {
+                                            // parse XML as String
+                                            xml2js.parseString(data, { mergeAttrs: true }, function (err, result) {
+                                                if (err) {
+                                                    throw err;
+                                                }
+                                                // Stringify for convert to JSON format 
+                                                var json = JSON.stringify(result);
+                                                data = JSON.parse(json);
+                                                resolve(data);
+                                            });
+                                            return [2 /*return*/];
+                                        });
+                                    });
+                                });
+                            })];
+                        case 1: return [2 /*return*/, _a.sent()];
+                    }
+                });
+            });
+        }
+        var data;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, new Promise(function (resolve) {
-                        fs.readFile(xml_report_path, 'utf8', function (err, data) {
-                            return __awaiter(this, void 0, void 0, function () {
-                                return __generator(this, function (_a) {
-                                    xml2js.parseString(data, { mergeAttrs: true }, function (err, result) {
-                                        if (err) {
-                                            throw err;
-                                        }
-                                        var json = JSON.stringify(result);
-                                        var response = JSON.parse(json);
-                                        //response.testsuites['testsuite'][0].testcase[1]['name']
-                                        console.log(response.testsuites['testsuite'][1]);
-                                    });
-                                    return [2 /*return*/];
-                                });
-                            });
-                        });
-                    })];
-                case 1: return [2 /*return*/, _a.sent()];
+                case 0: return [4 /*yield*/, getJson()];
+                case 1:
+                    data = _a.sent();
+                    return [2 /*return*/, data];
             }
         });
     });
 }
-exports.getFile = getFile;
-getFile();
-function getJestReport() {
-    var xml = "< ?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n            <user id=\"1\">\n                <name>John Doe</name>\n                <email>john.doe@example.com</email>\n                <roles>\n                    <role>Member</role>\n                    <role>Admin</role>\n                </roles>\n                <admin>true</admin>\n            </user>";
-    xml2js.parseString(xml, function (err, result) {
-        if (err) {
-            throw err;
-        }
-        // `result` is a JavaScript object
-        // convert it to a JSON string
-        var json = JSON.stringify(result, null, 4);
-        // log JSON string
-        console.log(json);
-    });
-}
-exports.getJestReport = getJestReport;
-// getJestReport();
+exports.getXmlFilesJsonData = getXmlFilesJsonData;
