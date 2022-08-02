@@ -1,5 +1,5 @@
 {
-  "name": "zephyr",
+  "name": "@lukaspollak/zephyr",
   "version": "1.2.0",
   "description": "Parsing JSON data and import it to Zephyr as reports of autoamtion testing!",
   "main": "main.js",
@@ -29,6 +29,6 @@
   "devDependencies": {
     "@types/node": "^16.10.1"
   },
-  "main": "dist/main.js",
+  // "main": "dist/main.js",
   "homepage": "https://github.com/lukaspollak/zephyr#readme"
 }
