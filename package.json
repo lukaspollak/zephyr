@@ -1,17 +1,21 @@
 {
   "name": "zephyr",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Parsing JSON data and import it to Zephyr as reports of autoamtion testing!",
   "main": "main.js",
+  "author": "lukaspollak",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git@gitlab.bart.sk:pollak/zephyr.git"
+    "url": "https://github.com/lukaspollak/zephyr"
   },
-  "keywords": [],
-  "author": "Lukas Pollak",
+  "keywords": [
+    "zephyr",
+    "jira",
+    "testing"
+  ],
   "license": "ISC",
   "dependencies": {
     "atlassian-jwt": "^2.0.2",
@@ -24,5 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "^16.10.1"
-  }
+  },
+  "main": "dist/main.js",
+  "homepage": "https://github.com/lukaspollak/zephyr#readme"
 }
