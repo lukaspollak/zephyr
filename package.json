@@ -29,5 +29,8 @@
   "devDependencies": {
     "@types/node": "^16.10.1"
   },
-  "homepage": "https://github.com/lukaspollak/zephyr#readme"
+  "homepage": "https://github.com/lukaspollak/zephyr#readme",
+  "publishConfig": {
+    "@lukaspollak:registry": "https://npm.pkg.github.com"
+  }
 }
