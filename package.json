@@ -5,12 +5,13 @@
   "main": "main.js",
   "author": "lukaspollak",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lukaspollak/zephyr.git"
   },
+  
   "keywords": [
     "zephyr",
     "jira",
