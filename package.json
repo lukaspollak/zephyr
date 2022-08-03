@@ -6,7 +6,7 @@
   "author": "lukaspollak",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",
-    "build": "tsc",
+    "build": "npx tsc",
     "start": "node dist/main.js"
   },
   "repository": {
