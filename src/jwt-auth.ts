@@ -27,6 +27,6 @@ export function getJWT(
     qsh: jwt.createQueryStringHash(req, false, baseUrl),
   };
 
-  const token: string = jwt.encodeSymmetric(tokenData, secretKey);
+  const token: string = jwt.encode(tokenData, secretKey);
   return token;
 }
