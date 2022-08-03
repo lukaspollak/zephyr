@@ -1,6 +1,6 @@
 {
   "name": "@lukaspollak/zephyr",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "description": "Parsing JSON data and import it to Zephyr as reports of autoamtion testing!",
   "main": "dist/main.js",
   "author": "lukaspollak",
