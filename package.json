@@ -5,7 +5,8 @@
   "main": "main.js",
   "author": "lukaspollak",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 0"
+    "test": "echo \"Error: no test specified\" && exit 0",
+    "start": "node main.js"
   },
   "repository": {
     "type": "git",
@@ -38,5 +39,8 @@
   },
   "bugs": {
     "url": "https://github.com/lukaspollak/zephyr/issues"
+  },
+  "bin": {
+    "e2ereporting": "node main.js"
   }
 }
