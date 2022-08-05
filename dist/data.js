@@ -10,11 +10,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateJiraIssueStatus = exports.getFilesData = exports.execs = exports.updateStepResult = exports.putStepResult = exports.bulkEditSteps = exports.bulkEditExecs = exports.createExecution = exports.createAndAssignExecution = exports.getIsseuId = exports.getCycleId = exports.createCycle = exports.getIdOfVersion = exports.getTestId = exports.getJiraCrosId = exports.getTestIT = void 0;
-const ZephyrApiVersion = '/public/rest/api/1.0';
-const jiraProjectID = 10000;
+// get parent dir name of node modules
+const path = require('path');
+const parent_dirname = path.join(__dirname, '../../..');
+// get config from parent dir of node modules, so config.json should be placed there
+const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const ZephyrApiVersion = '/public/rest/api/' + configZephyr.zephyrDefaultOptions.ZephyrApiVersion;
+const jiraProjectID = configZephyr.zephyrDefaultOptions.jiraProjectID;
 const apicall = require('./apicall');
-const testFolder = '../cross-app/reports/jsons';
 const fs = require('fs');
+// folder where jsons are placed
+let testFolder = '../reports/jsons';
+if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
+    testFolder = configZephyr.zephyrDefaultOptions.reportsDir;
+}
 function getTestIT(description) {
     const start_pos = 0;
     const start_pos1 = description.indexOf('|');
@@ -304,7 +313,7 @@ function updateStepResult(obj, issueId, execId) {
     });
 }
 exports.updateStepResult = updateStepResult;
-function execs(path = '../cross-app/reports/jsons/') {
+function execs(path = testFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         let i = 0;
         function getFiles() {
@@ -323,7 +332,7 @@ function execs(path = '../cross-app/reports/jsons/') {
     });
 }
 exports.execs = execs;
-function getFilesData(path = '../cross-app/reports/jsons/') {
+function getFilesData(path = testFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         const res = yield execs();
         let i = 0;
