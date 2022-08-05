@@ -11,9 +11,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.main = void 0;
 const datas = require('./data');
-const fs = require('fs');
-//test Folder of generated JSONs
-const fsPath = '../cross-app/reports';
+// get parent dir name of node modules
+const path = require('path');
+const parent_dirname = path.join(__dirname, '../../..');
+// get config from parent dir of node modules, so config.json should be placed there
+const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyrUser = require('/' + parent_dirname + '/configZephyrUser.json');
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         let [data, crossids] = yield datas.getFilesData();
@@ -24,8 +27,8 @@ function main() {
         let failedExecs = [''];
         let pendingExecs = [''];
         let unexecutedExecs = [''];
-        let branch_proccess_argv = process.argv[3];
-        let cycle_proccess_argv = process.argv[4];
+        let branch_proccess_argv = configZephyr.zephyrDefaultOptions.version;
+        let cycle_proccess_argv = configZephyr.zephyrDefaultOptions.cycle;
         if (branch_proccess_argv == undefined) {
             branch_proccess_argv = "";
             console.warn("Branch is not filled in console arguments!");

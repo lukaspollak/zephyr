@@ -10,14 +10,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.postData = exports.putData = exports.getData = exports.postJiraData = exports.getJiraData = void 0;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const config = require('../config.json');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const auth = require('./jwt-auth');
-// import http from "http";
 const request = require("request");
-// const fetch = require('node-fetch');
-function getJiraData(urlParams, login = "pollak@bart.sk", api_token = config.pollak.jira_token) {
+// get parent dir name of node modules
+const path = require('path');
+const parent_dirname = path.join(__dirname, '../../..');
+// get config from parent dir of node modules, so config.json should be placed there
+const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyrUser = require('/' + parent_dirname + '/configZephyrUser.json');
+function getJiraData(urlParams, login = "pollak@bart.sk", api_token = configZephyrUser.pollak.jira_token) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
         const options = {
@@ -43,7 +44,7 @@ function getJiraData(urlParams, login = "pollak@bart.sk", api_token = config.pol
 }
 exports.getJiraData = getJiraData;
 ;
-function postJiraData(urlParams, body, login = "pollak@bart.sk", api_token = config.pollak.jira_token) {
+function postJiraData(urlParams, body, login = "pollak@bart.sk", api_token = configZephyrUser.pollak.jira_token) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
         const options = {
@@ -71,8 +72,8 @@ exports.postJiraData = postJiraData;
 function getData(extendeApiCallUrl = '/public/rest/api/1.0/teststep/15550?projectId=10000') {
     return __awaiter(this, void 0, void 0, function* () {
         const JWT = auth.getJWT(extendeApiCallUrl);
-        const accessKey = config[process.argv[2]].access_key;
-        const baseUrl = config.pollak.base_api_call;
+        const accessKey = configZephyrUser[configZephyr.executor].access_key;
+        const baseUrl = configZephyrUser.base_api_call;
         const url = baseUrl + extendeApiCallUrl;
         const options = {
             method: 'GET',
@@ -100,8 +101,8 @@ exports.getData = getData;
 function putData(extendeApiCallUrl, bodyJSON) {
     return __awaiter(this, void 0, void 0, function* () {
         const JWT = auth.getJWT(extendeApiCallUrl, "PUT");
-        const accessKey = config[process.argv[2]].access_key;
-        const baseUrl = config.pollak.base_api_call;
+        const accessKey = configZephyrUser[configZephyr.executor].access_key;
+        const baseUrl = configZephyrUser.base_api_call;
         const url = baseUrl + extendeApiCallUrl;
         const options = {
             method: 'PUT',
@@ -132,8 +133,8 @@ exports.putData = putData;
 function postData(extendeApiCallUrl, bodyJSON) {
     return __awaiter(this, void 0, void 0, function* () {
         const JWT = auth.getJWT(extendeApiCallUrl, "POST");
-        const accessKey = config[process.argv[2]].access_key;
-        const baseUrl = config.pollak.base_api_call;
+        const accessKey = configZephyrUser[configZephyr.executor].access_key;
+        const baseUrl = configZephyrUser.base_api_call;
         const url = baseUrl + extendeApiCallUrl;
         const options = {
             method: 'POST',

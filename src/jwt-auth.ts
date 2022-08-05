@@ -1,17 +1,21 @@
 import * as jwt from "atlassian-jwt";
 const moment = require("moment");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const config = require("../config.json");
+const path = require('path');
+const parent_dirname = path.join(__dirname, '../../..');
+// get config from parent dir of node modules, so config.json should be placed there
+const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyrUser = require('/' + parent_dirname + '/configZephyrUser.json');
 
 export function getJWT(
-  extendeApiCallUrl: string = "/public/rest/api/1.0/stepresult/search?executionId=bacf0888-4be9-4e07-8474-559daafddfc8&issueId=15550",
+  extendeApiCallUrl: string = "",
   typereq = "GET"
 ) {
   // define ACCESS from Config file
-  const accessKey: string = config[process.argv[2]].access_key;
-  const secretKey: string = config[process.argv[2]].secret_key;
-  const accountId: string = config[process.argv[2]].account_id;
-  const baseUrl: string = config.pollak.base_api_call;
+  const accessKey: string = configZephyrUser[configZephyr.executor].access_key;
+  const secretKey: string = configZephyrUser[configZephyr.executor].secret_key;
+  const accountId: string = configZephyrUser[configZephyr.executor].account_id;
+  const baseUrl: string = configZephyr.zephyrDefaultOptions.base_api_call;
 
   const now = moment().utc();
   const req: jwt.Request = jwt.fromMethodAndUrl(
