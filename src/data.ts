@@ -1,8 +1,17 @@
-const ZephyrApiVersion = '/public/rest/api/1.0';
-const jiraProjectID = 10000;
+// get parent dir name of node modules
+const path = require('path');
+const parent_dirname = path.join(__dirname, '../../..');
+// get config from parent dir of node modules, so config.json should be placed there
+const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const ZephyrApiVersion = '/public/rest/api/' + configZephyr.zephyrDefaultOptions.ZephyrApiVersion;
+const jiraProjectID = configZephyr.zephyrDefaultOptions.jiraProjectID;
 const apicall = require('./apicall');
-const testFolder = '../cross-app/reports/jsons';
 const fs = require('fs');
+// folder where jsons are placed
+let testFolder: string = '../reports/jsons';
+if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
+   testFolder = configZephyr.zephyrDefaultOptions.reportsDir;
+}
 
 export function getTestIT(description: String) {
    const start_pos = 0;
@@ -273,7 +282,7 @@ export async function updateStepResult(obj: any, issueId: string, execId: string
    }
 }
 
-export async function execs(path = '../cross-app/reports/jsons/') {
+export async function execs(path: string = testFolder) {
    let i = 0;
    async function getFiles() {
       return new Promise<any>((resolve) => {
@@ -288,7 +297,7 @@ export async function execs(path = '../cross-app/reports/jsons/') {
    return res;
 }
 
-export async function getFilesData(path: string = '../cross-app/reports/jsons/') {
+export async function getFilesData(path: string = testFolder) {
    const res = await execs();
    let i: number = 0;
    let j: number = 0;
