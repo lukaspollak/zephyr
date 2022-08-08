@@ -1,4 +1,4 @@
-# .npmgitignore
+# .gitignore
 configZephyr.json
 configZephyrUser.json
 node_modules

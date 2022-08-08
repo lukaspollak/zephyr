@@ -14,16 +14,18 @@ exports.updateJiraIssueStatus = exports.getFilesData = exports.execs = exports.u
 const path = require('path');
 const parent_dirname = path.join(__dirname, '../../..');
 // get config from parent dir of node modules, so config.json should be placed there
-const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyr = require('../configZephyr.json');
+// const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
 const ZephyrApiVersion = '/public/rest/api/' + configZephyr.zephyrDefaultOptions.ZephyrApiVersion;
 const jiraProjectID = configZephyr.zephyrDefaultOptions.jiraProjectID;
 const apicall = require('./apicall');
 const fs = require('fs');
 // folder where jsons are placed
-let testFolder = '../reports/jsons';
-if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
-    testFolder = configZephyr.zephyrDefaultOptions.reportsDir;
-}
+const testFolder = '../reports/jsons';
+// let testFolder: string = '../reports/jsons';
+// if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
+//    testFolder = configZephyr.zephyrDefaultOptions.reportsDir;
+// }
 function getTestIT(description) {
     const start_pos = 0;
     const start_pos1 = description.indexOf('|');
@@ -332,7 +334,7 @@ function execs(path = testFolder) {
     });
 }
 exports.execs = execs;
-function getFilesData(path = testFolder) {
+function getFilesData(path = testFolder + '/') {
     return __awaiter(this, void 0, void 0, function* () {
         const res = yield execs();
         let i = 0;
