@@ -16,10 +16,8 @@ const request = require("request");
 const path = require('path');
 const parent_dirname = path.join(__dirname, '../../..');
 // get config from parent dir of node modules, so config.json should be placed there
-const configZephyr = require('../configZephyr.json');
-const configZephyrUser = require('../configZephyrUser.json');
-// const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
-// const configZephyrUser = require('/' + parent_dirname + '/configZephyrUser.json');
+const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyrUser = require('/' + parent_dirname + '/configZephyrUser.json');
 function getJiraData(urlParams, login = "pollak@bart.sk", api_token = configZephyrUser.pollak.jira_token) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
