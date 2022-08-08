@@ -2,8 +2,7 @@
 const path = require('path');
 const parent_dirname = path.join(__dirname, '../../..');
 // get config from parent dir of node modules, so config.json should be placed there
-const configZephyr = require('../configZephyr.json');
-// const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
 const ZephyrApiVersion = '/public/rest/api/' + configZephyr.zephyrDefaultOptions.ZephyrApiVersion;
 const jiraProjectID = configZephyr.zephyrDefaultOptions.jiraProjectID;
 const apicall = require('./apicall');
