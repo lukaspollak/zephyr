@@ -39,6 +39,9 @@ Package for import reports to Jira extension Zephyr should be correctly installe
                     └── main.ts           # main algorithm for importing 
                └── package.json                          
                └── tsconfig.json          # compiler options
+               └── .gitignore
+               └── .npmignore
+               └── .npmrc
 ```
 
 # USER CONFIG Example
