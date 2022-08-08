@@ -34,9 +34,9 @@ const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
 const configZephyrUser = require('/' + parent_dirname + '/configZephyrUser.json');
 function getJWT(extendeApiCallUrl = "", typereq = "GET") {
     // define ACCESS from Config file
-    const accessKey = configZephyrUser[configZephyr.executor].access_key;
-    const secretKey = configZephyrUser[configZephyr.executor].secret_key;
-    const accountId = configZephyrUser[configZephyr.executor].account_id;
+    const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+    const secretKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].secret_key;
+    const accountId = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].account_id;
     const baseUrl = configZephyr.zephyrDefaultOptions.base_api_call;
     const now = moment().utc();
     const req = jwt.fromMethodAndUrl(typereq, baseUrl + extendeApiCallUrl);

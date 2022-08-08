@@ -64,8 +64,8 @@ export async function postJiraData(urlParams: string, body: any, login = "pollak
 
 export async function getData(extendeApiCallUrl: string = '/public/rest/api/1.0/teststep/15550?projectId=10000') {
     const JWT: string = auth.getJWT(extendeApiCallUrl);
-    const accessKey: string = configZephyrUser[configZephyr.executor].access_key;
-    const baseUrl: string = configZephyrUser.base_api_call;
+    const accessKey: string = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+    const baseUrl: string = configZephyr.zephyrDefaultOptions.base_api_call;
     const url: string = baseUrl + extendeApiCallUrl;
 
     const options = {
@@ -94,8 +94,8 @@ export async function getData(extendeApiCallUrl: string = '/public/rest/api/1.0/
 
 export async function putData(extendeApiCallUrl: string, bodyJSON: any) {
     const JWT: string = auth.getJWT(extendeApiCallUrl, "PUT");
-    const accessKey: string = configZephyrUser[configZephyr.executor].access_key;
-    const baseUrl: string = configZephyrUser.base_api_call;
+    const accessKey: string = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+    const baseUrl: string = configZephyr.zephyrDefaultOptions.base_api_call;
     const url: string = baseUrl + extendeApiCallUrl;
 
     const options = {
@@ -125,8 +125,8 @@ export async function putData(extendeApiCallUrl: string, bodyJSON: any) {
 
 export async function postData(extendeApiCallUrl: string, bodyJSON: any) {
     const JWT: string = auth.getJWT(extendeApiCallUrl, "POST");
-    const accessKey: string = configZephyrUser[configZephyr.executor].access_key;
-    const baseUrl: string = configZephyrUser.base_api_call;
+    const accessKey: string = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+    const baseUrl: string = configZephyr.zephyrDefaultOptions.base_api_call;
     const url: string = baseUrl + extendeApiCallUrl;
 
     const options = {
@@ -139,7 +139,7 @@ export async function postData(extendeApiCallUrl: string, bodyJSON: any) {
         body: JSON.stringify(bodyJSON),
     };
 
-    function fetchpost() {
+    async function fetchpost() {
         return new Promise<any>((resolve) => {
             request(url, options, function (error: any, response: any, body: any) {
                 resolve(response.body);

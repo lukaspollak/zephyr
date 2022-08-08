@@ -3,14 +3,14 @@ const path = require('path');
 const parent_dirname = path.join(__dirname, '../../..');
 // get config from parent dir of node modules, so config.json should be placed there
 const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
-const ZephyrApiVersion = '/public/rest/api/' + configZephyr.zephyrDefaultOptions.ZephyrApiVersion;
-const jiraProjectID = configZephyr.zephyrDefaultOptions.jiraProjectID;
+const ZephyrApiVersion = '/public/rest/api/' + configZephyr.zephyrDefaultOptions.zephyrApiVersion;
+const jiraProjectID = configZephyr.zephyrDefaultOptions.jiraProjectId;
 const apicall = require('./apicall');
 const fs = require('fs');
 // folder where jsons are placed
-let testFolder: string = '../reports/jsons';
+let testFolder: string = '../reports/jsons/';
 if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
-   testFolder = configZephyr.zephyrDefaultOptions.reportsDir;
+   testFolder = configZephyr.zephyrDefaultOptions.reportsDir + "/";
 }
 
 export function getTestIT(description: String) {
@@ -297,7 +297,7 @@ export async function execs(path: string = testFolder) {
    return res;
 }
 
-export async function getFilesData(path: string = testFolder + '/') {
+export async function getFilesData(path: string = testFolder) {
    const res = await execs();
    let i: number = 0;
    let j: number = 0;

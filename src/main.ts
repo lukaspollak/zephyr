@@ -14,8 +14,8 @@ export async function main() {
    let failedExecs: Array<string> = [''];
    let pendingExecs: Array<string> = [''];
    let unexecutedExecs: Array<string> = [''];
-   let branch_proccess_argv = configZephyr.zephyrDefaultOptions.version as String;
-   let cycle_proccess_argv = configZephyr.zephyrDefaultOptions.cycle as String;
+   let branch_proccess_argv = configZephyr.zephyrDefaultOptions.version;
+   let cycle_proccess_argv = configZephyr.zephyrDefaultOptions.cycle;
 
    if (branch_proccess_argv == undefined) {
       branch_proccess_argv = "";
@@ -61,7 +61,7 @@ export async function main() {
                      wip = true;
                   }
                }
-               // if at minimum one test step failed and pending its is less than count of all its and no step is WIP 
+               // if at minimum one test step failed and pending its is less than count of all its and no step is WIP
                // >> y--, so test exec hash is not added to failed tests array and place is cleared for next created failed execution in next while cycle
                if (passed == false && count_pending_its != index.length) {
                   failedExecs[indexOfFailedExecs] = response;

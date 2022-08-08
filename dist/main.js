@@ -72,7 +72,7 @@ function main() {
                                         wip = true;
                                     }
                                 }
-                                // if at minimum one test step failed and pending its is less than count of all its and no step is WIP 
+                                // if at minimum one test step failed and pending its is less than count of all its and no step is WIP
                                 // >> y--, so test exec hash is not added to failed tests array and place is cleared for next created failed execution in next while cycle
                                 if (passed == false && count_pending_its != index.length) {
                                     failedExecs[indexOfFailedExecs] = response;

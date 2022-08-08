@@ -72,8 +72,8 @@ exports.postJiraData = postJiraData;
 function getData(extendeApiCallUrl = '/public/rest/api/1.0/teststep/15550?projectId=10000') {
     return __awaiter(this, void 0, void 0, function* () {
         const JWT = auth.getJWT(extendeApiCallUrl);
-        const accessKey = configZephyrUser[configZephyr.executor].access_key;
-        const baseUrl = configZephyrUser.base_api_call;
+        const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+        const baseUrl = configZephyr.zephyrDefaultOptions.base_api_call;
         const url = baseUrl + extendeApiCallUrl;
         const options = {
             method: 'GET',
@@ -101,8 +101,8 @@ exports.getData = getData;
 function putData(extendeApiCallUrl, bodyJSON) {
     return __awaiter(this, void 0, void 0, function* () {
         const JWT = auth.getJWT(extendeApiCallUrl, "PUT");
-        const accessKey = configZephyrUser[configZephyr.executor].access_key;
-        const baseUrl = configZephyrUser.base_api_call;
+        const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+        const baseUrl = configZephyr.zephyrDefaultOptions.base_api_call;
         const url = baseUrl + extendeApiCallUrl;
         const options = {
             method: 'PUT',
@@ -133,8 +133,8 @@ exports.putData = putData;
 function postData(extendeApiCallUrl, bodyJSON) {
     return __awaiter(this, void 0, void 0, function* () {
         const JWT = auth.getJWT(extendeApiCallUrl, "POST");
-        const accessKey = configZephyrUser[configZephyr.executor].access_key;
-        const baseUrl = configZephyrUser.base_api_call;
+        const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+        const baseUrl = configZephyr.zephyrDefaultOptions.base_api_call;
         const url = baseUrl + extendeApiCallUrl;
         const options = {
             method: 'POST',
@@ -146,9 +146,11 @@ function postData(extendeApiCallUrl, bodyJSON) {
             body: JSON.stringify(bodyJSON),
         };
         function fetchpost() {
-            return new Promise((resolve) => {
-                request(url, options, function (error, response, body) {
-                    resolve(response.body);
+            return __awaiter(this, void 0, void 0, function* () {
+                return new Promise((resolve) => {
+                    request(url, options, function (error, response, body) {
+                        resolve(response.body);
+                    });
                 });
             });
         }

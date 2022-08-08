@@ -12,9 +12,9 @@ export function getJWT(
   typereq = "GET"
 ) {
   // define ACCESS from Config file
-  const accessKey: string = configZephyrUser[configZephyr.executor].access_key;
-  const secretKey: string = configZephyrUser[configZephyr.executor].secret_key;
-  const accountId: string = configZephyrUser[configZephyr.executor].account_id;
+  const accessKey: string = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
+  const secretKey: string = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].secret_key;
+  const accountId: string = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].account_id;
   const baseUrl: string = configZephyr.zephyrDefaultOptions.base_api_call;
 
   const now = moment().utc();
