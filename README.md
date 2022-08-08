@@ -22,26 +22,10 @@ Package for import reports to Jira extension Zephyr should be correctly installe
 ├── Home directory                        # project where package is installed - here must be configs placed after instalation of npm package
      └── configZephyr.json                # configuration of Project, API version of Apiari (Zephyr), inputs for run script as executor, branch, custom cycle name
      └── confgiZephyrUser.json            # ids, keys, tokens for reporter (or ...) which use the zephyr script
-     └── node_modules                     # node modules of project fro which zephyr-import package is installed
+     └── node_modules                     # node modules of project fro where zephyr-import package is installed
           └── zephyr-import               # project
                └── README
-               └── configZephyr.ts
-               └── configZephyrUser.ts
-               └── dist                   # compiled scripts from src. Compiled by npm run build defined in scripts of package.json
-                    └── data.js                
-                    └── apicall.js            
-                    └── jwt-atuh.js            
-                    └── main.js 
-               └── src                   # implementation scripts
-                    └── data.ts           # parsing data             
-                    └── apicall.ts        # apiCall to Apiari (Zephyr)    
-                    └── jwt-atuh.ts       # authentfication for api calls     
-                    └── main.ts           # main algorithm for importing 
-               └── package.json                          
-               └── tsconfig.json          # compiler options
-               └── .gitignore
-               └── .npmignore
-               └── .npmrc
+               └── ...
 ```
 
 # USER CONFIG Example
@@ -52,6 +36,7 @@ Package for import reports to Jira extension Zephyr should be correctly installe
 * jira_token: go to Manage profile url: https://id.atlassian.com/manage-profile/security/api-tokens, and generate your new token
 
 ```shell script
+// confgiZephyrUser.json
 {
   "user_name": {
     "account_id": "6x483..xx...08bd4",
@@ -73,7 +58,7 @@ Package for import reports to Jira extension Zephyr should be correctly installe
 * version: so branch. This is the input from which selected version is found and new cycle is linked to version found.
 * cycle: custom cycle name. So if u do not wanna to have name parsed from version paramater, u can put custom name of cycle which will be linked to version found by param version 
 ```shell script
-{
+// configZephyr.json
 {
   "zephyrDefaultOptions": {
     "jiraProjectId": 10000,

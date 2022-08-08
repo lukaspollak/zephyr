@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2020",
     "module": "commonjs",
     "lib": [
-      "es6",
+      "es2020",
       "dom"
     ],
     "outDir": "./dist",
@@ -14,6 +14,10 @@
     "noImplicitAny": false,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "pretty": true,
+    "declaration": true
   },
   "files": [
     "src/apicall.ts",
