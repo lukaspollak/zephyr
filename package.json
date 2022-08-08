@@ -1,6 +1,6 @@
 {
   "name": "zephyr-import",
-  "version": "1.4.5",
+  "version": "1.4.7",
   "description": "Parsing JSON data and import it to Zephyr as reports of autoamtion testing!",
   "main": "dist/main.js",
   "author": "lukaspollak",

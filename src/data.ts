@@ -9,11 +9,10 @@ const jiraProjectID = configZephyr.zephyrDefaultOptions.jiraProjectID;
 const apicall = require('./apicall');
 const fs = require('fs');
 // folder where jsons are placed
-const testFolder = '../reports/jsons';
-// let testFolder: string = '../reports/jsons';
-// if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
-//    testFolder = configZephyr.zephyrDefaultOptions.reportsDir;
-// }
+let testFolder: string = '../reports/jsons';
+if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
+   testFolder = configZephyr.zephyrDefaultOptions.reportsDir;
+}
 
 export function getTestIT(description: String) {
    const start_pos = 0;
