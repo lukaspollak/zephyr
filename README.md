@@ -32,7 +32,7 @@ Package for import reports to Jira extension Zephyr should be correctly installe
                     └── apicall.js            
                     └── jwt-atuh.js            
                     └── main.js 
-               └── dist                   # implementation scripts
+               └── src                   # implementation scripts
                     └── data.ts           # parsing data             
                     └── apicall.ts        # apiCall to Apiari (Zephyr)    
                     └── jwt-atuh.ts       # authentfication for api calls     
