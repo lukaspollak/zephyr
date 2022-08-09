@@ -5,7 +5,7 @@ const path = require('path');
 const parent_dirname = path.join(__dirname, '../../..');
 // get config from parent dir of node modules, so config.json should be placed there
 const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
-const configZephyrUser = require('/' + parent_dirname + '/configZephyrUser.json');
+const configZephyrUser = require('/' + parent_dirname + '/configZephyr.json');
 
 export function getJWT(
   extendeApiCallUrl: string = "",

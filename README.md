@@ -21,34 +21,13 @@ Package for import reports to Jira extension Zephyr should be correctly installe
 .
 ├── Home directory                        # project where package is installed - here must be configs placed after instalation of npm package
      └── configZephyr.json                # configuration of Project, API version of Apiari (Zephyr), inputs for run script as executor, branch, custom cycle name
-     └── confgiZephyrUser.json            # ids, keys, tokens for reporter (or ...) which use the zephyr script
+                                          # ids, keys, tokens for reporter (or ...) which use the zephyr script
      └── node_modules                     # node modules of project fro where zephyr-import package is installed
           └── zephyr-import               # project
                └── README
                └── ...
 ```
-
-# USER CONFIG Example
-
-* account_id: u can find it in url when u open your profile in JIRA: project.atlassian.net/jira/people/{{account_id}}
-* access_key: key to access for zephyr API. Go in JIRA: Apps/Zephyr/API Keys >> copy Access key
-* secret_key: key to access for zephyr API. Go in JIRA: Apps/Zephyr/API Keys >> copy Secret key >> do not send it to external users (security)
-* jira_token: go to Manage profile url: https://id.atlassian.com/manage-profile/security/api-tokens, and generate your new token
-
-```shell script
-// confgiZephyrUser.json
-{
-  "user_name": {
-    "account_id": "6x483..xx...08bd4",
-    "access_key": "MD...xxx...........kFVTFRfT..xxx...RQ",
-    "secret_key": "ALBJgdcccxxxxx.....y2DtadVI.....WUfgp..xx",
-    "jira_token": "5qAvm...xxxx...4BD"
-  },
-}
-
-```
-
-# Zephyr CONFIG Example
+# Zephyr default options example
 
 * jiraProjectID: ID of project, ussually number. U can find it in project URL.
 * base_api_call: DEVELOPMENT: default value, DO NOT CHANGE IT if u do not wanna update implementation
@@ -57,6 +36,13 @@ Package for import reports to Jira extension Zephyr should be correctly installe
 * exectuor: who is running the script and his params are defined in user config above
 * version: so branch. This is the input from which selected version is found and new cycle is linked to version found.
 * cycle: custom cycle name. So if u do not wanna to have name parsed from version paramater, u can put custom name of cycle which will be linked to version found by param version 
+
+# User setup example
+* account_id: u can find it in url when u open your profile in JIRA: project.atlassian.net/jira/people/{{account_id}}
+* access_key: key to access for zephyr API. Go in JIRA: Apps/Zephyr/API Keys >> copy Access key
+* secret_key: key to access for zephyr API. Go in JIRA: Apps/Zephyr/API Keys >> copy Secret key >> do not send it to external users (security)
+* jira_token: go to Manage profile url: https://id.atlassian.com/manage-profile/security/api-tokens, and generate your new token
+
 ```shell script
 // configZephyr.json
 {
@@ -68,7 +54,13 @@ Package for import reports to Jira extension Zephyr should be correctly installe
     "executor": "user_name",
     "version": "release/2.5.5",
     "cycle": "RELEASE"
-  }
+  }, 
+  "user_name": {
+    "account_id": "6x483..xx...08bd4",
+    "access_key": "MD...xxx...........kFVTFRfT..xxx...RQ",
+    "secret_key": "ALBJgdcccxxxxx.....y2DtadVI.....WUfgp..xx",
+    "jira_token": "5qAvm...xxxx...4BD"
+  },
 }
 ```
 # Installing project
