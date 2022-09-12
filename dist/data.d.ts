@@ -3,7 +3,7 @@ export declare function getJiraCrosId(description: String): string;
 export declare function getTestId(description: String): string;
 export declare function getIdOfVersion(versionName: string, projectId?: number): Promise<number>;
 export declare function createCycle(branch: string, custom_cycle_name?: string, projectId?: number): Promise<string>;
-export declare function getCycleId(branch: string, cycleName?: string, projectId?: number): Promise<any>;
+export declare function getCycleId(branch: string, cycleName?: string, skip_duplicity_verify?: boolean, projectId?: number): Promise<any>;
 export declare function getIsseuId(jiraIssueID: string): Promise<any>;
 export declare function createAndAssignExecution(jiraIssueID: string, cycleId: any, branch: string, custom_cycle_name?: string): Promise<any>;
 export declare function createExecution(jiraIssueID?: string, cycleId?: any, versionID?: any): Promise<any>;

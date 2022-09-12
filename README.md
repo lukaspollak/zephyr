@@ -36,6 +36,7 @@ Package for import reports to Jira extension Zephyr should be correctly installe
 * exectuor: who is running the script and his params are defined in user config above
 * version: so branch. This is the input from which selected version is found and new cycle is linked to version found.
 * cycle: custom cycle name. So if u do not wanna to have name parsed from version paramater, u can put custom name of cycle which will be linked to version found by param version 
+* skip_duplicityCycle_verify: if set to true, possible to create same cycle name for one version
 
 # User setup example
 * account_id: u can find it in url when u open your profile in JIRA: project.atlassian.net/jira/people/{{account_id}}
@@ -53,7 +54,8 @@ Package for import reports to Jira extension Zephyr should be correctly installe
     "reportsDir": "./reports/jsons",
     "executor": "user_name",
     "version": "release/2.5.5",
-    "cycle": "RELEASE"
+    "cycle": "RELEASE",
+    "skip_duplicityCycle_verify": false,
   }, 
   "user_name": {
     "account_id": "6x483..xx...08bd4",

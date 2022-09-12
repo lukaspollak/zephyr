@@ -21,11 +21,11 @@ async function main() {
     let cycle_proccess_argv = configZephyr.zephyrDefaultOptions.cycle;
     if (branch_proccess_argv == undefined) {
         branch_proccess_argv = "";
-        console.warn("Branch is not filled in console arguments!");
+        console.warn("Branch is not filled in config options arguments!");
     }
     if (cycle_proccess_argv == undefined) {
         cycle_proccess_argv = "";
-        console.warn("Cycle name is not filled in console arguments!");
+        console.warn("Cycle name is not filled in config options arguments!");
     }
     function getAllIndexes(arr, val) {
         let indexes = [], i = -1;
@@ -34,13 +34,16 @@ async function main() {
         }
         return indexes;
     }
+    let allow_duplicity_of_cycles = configZephyr.zephyrDefaultOptions.skip_duplicityCycle_verify;
     const unique = Array.from(new Set(crossids));
     while (indexOfCycle < unique.length) {
         let index = getAllIndexes(crossids, unique[indexOfCycle]);
         let obj = JSON.parse(data[index[0]]);
         let crossId = datas.getJiraCrosId(obj['description']);
         let issueId = await datas.getIsseuId(crossId);
-        await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(async function (cycleId) {
+        await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv, allow_duplicity_of_cycles).then(async function (cycleId) {
+            // allowed only with first initialization, cause without it will report each test to new cycle
+            allow_duplicity_of_cycles = false;
             try {
                 await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function (response) {
                     let passed = true;
@@ -117,12 +120,6 @@ async function main() {
     await datas.bulkEditExecs(failedExecs, false);
     await datas.bulkEditExecs(pendingExecs, false, true);
     await datas.bulkEditExecs(unexecutedExecs, false, false, true);
-    // try {
-    //    fs.unlinkSync(fsPath)
-    //    //file removed
-    //  } catch(err) {
-    //    console.error(err)
-    //  }
     console.log("Passed", passedExecs);
     console.log("Failed", failedExecs);
     console.log("Pending", pendingExecs);

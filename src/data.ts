@@ -44,21 +44,25 @@ export async function getIdOfVersion(versionName: string, projectId: number = ji
    let versions: string;
    let versionsJSON: any;
    let id: number = -1;
-   try {
-      versions = await apicall.getJiraData('project/' + projectId + '/versions');
-      versionsJSON = JSON.parse(versions);
+   if (versionName != "development") {
+      try {
+         versions = await apicall.getJiraData('project/' + projectId + '/versions');
+         versionsJSON = JSON.parse(versions);
 
-      for (let i in versionsJSON) {
-         if (versionsJSON[i].name === versionName) {
-            id = versionsJSON[i].id;
-            return id;
+         for (let i in versionsJSON) {
+            if (versionsJSON[i].name.includes(versionName)) {
+               id = versionsJSON[i].id;
+               return id;
+            }
          }
+      } catch (err) {
+         console.log('Versions call troubles!', err);
       }
-   } catch (err) {
-      console.log('Versions call troubles!', err);
+   } else if (versionName === "development") {
+      id = -1;
    }
    if (id === -1) {
-      console.log('Version does not exist or it is Ad Hoc!');
+      console.log('Version does not exist or u wanna run test as Ad Hoc!');
       return id;
    }
 }
@@ -84,7 +88,7 @@ export async function createCycle(branch: string, custom_cycle_name: string = ''
    if (custom_cycle_name != '') {
       cycleName = custom_cycle_name;
       environment = 'TEST';
-      description = 'Tests was runned during release period as custom release cycle!';
+      description = 'Tests was runned as custom release cycle!';
    }
 
    version = branch.split('/').pop();
@@ -109,34 +113,38 @@ export async function createCycle(branch: string, custom_cycle_name: string = ''
    return cycle_id;
 }
 
-export async function getCycleId(branch: string, cycleName: string = '', projectId: number = jiraProjectID) {
+export async function getCycleId(branch: string, cycleName: string = '', skip_duplicity_verify: boolean = false, projectId: number = jiraProjectID) {
    let response: any;
    let cycle_id: any = -1;
    const splittedVersion = branch.split('/', 2);
    const versionName = splittedVersion[1];
 
-   if (cycleName == '') {
-      cycleName = splittedVersion[0];
-   }
+   if (skip_duplicity_verify == false) {
+      if (cycleName == '') {
+         cycleName = splittedVersion[0];
+      }
 
-   await getIdOfVersion(versionName).then(async function (versionID: number) {
-      if (versionID != -1) {
-         response = await apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId);
-         const cycleJSON = JSON.parse(response);
-         for (let i in cycleJSON) {
-            if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
-               cycle_id = cycleJSON[i].id;
+      await getIdOfVersion(versionName).then(async function (versionID: number) {
+         if (versionID != -1) {
+            response = await apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId);
+            const cycleJSON = JSON.parse(response);
+            for (let i in cycleJSON) {
+               if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
+                  cycle_id = cycleJSON[i].id;
+                  return cycle_id;
+               }
+            }
+            if (cycle_id == -1) {
+               console.log('Cycle does not exist!');
                return cycle_id;
             }
+         } else {
+            console.error("Version does not Exist!");
          }
-         if (cycle_id == -1) {
-            console.log('Cycle does not exist!');
-            return cycle_id;
-         }
-      } else {
-         console.error("Version does not Exist!");
-      }
-   });
+      });
+   } else if (skip_duplicity_verify == true) {
+      cycle_id = -1;
+   }
    return cycle_id;
 }
 
