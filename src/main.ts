@@ -18,11 +18,11 @@ export async function main() {
 
    if (branch_proccess_argv == undefined) {
       branch_proccess_argv = "";
-      console.warn("Branch is not filled in console arguments!")
+      console.warn("Branch is not filled in config options arguments!")
    }
    if (cycle_proccess_argv == undefined) {
       cycle_proccess_argv = "";
-      console.warn("Cycle name is not filled in console arguments!")
+      console.warn("Cycle name is not filled in config options arguments!")
    }
 
    function getAllIndexes(arr: any, val: any) {
@@ -33,6 +33,7 @@ export async function main() {
       return indexes;
    }
 
+   let allow_duplicity_of_cycles: boolean = configZephyr.zephyrDefaultOptions.skip_duplicityCycle_verify
    const unique = Array.from(new Set(crossids));
    while (indexOfCycle < unique.length) {
       let index = getAllIndexes(crossids, unique[indexOfCycle]);
@@ -40,7 +41,9 @@ export async function main() {
       let crossId: string = datas.getJiraCrosId(obj['description']);
       let issueId: string = await datas.getIsseuId(crossId);
 
-      await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv).then(async function (cycleId: any) {
+      await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv, allow_duplicity_of_cycles).then(async function (cycleId: any) {
+         // allowed only with first initialization, cause without it will report each test to new cycle
+         allow_duplicity_of_cycles = false;
          try {
             await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function (response: string) {
                let passed = true;
@@ -115,13 +118,6 @@ export async function main() {
    await datas.bulkEditExecs(failedExecs, false);
    await datas.bulkEditExecs(pendingExecs, false, true);
    await datas.bulkEditExecs(unexecutedExecs, false, false, true);
-
-   // try {
-   //    fs.unlinkSync(fsPath)
-   //    //file removed
-   //  } catch(err) {
-   //    console.error(err)
-   //  }
 
    console.log("Passed", passedExecs);
    console.log("Failed", failedExecs);

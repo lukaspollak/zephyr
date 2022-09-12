@@ -6,7 +6,8 @@ export interface Config {
         reportsDir: string,
         executor: string,
         version: string,
-        cycle: string
+        cycle: string,
+        skip_duplicityCycle_verify: boolean,
     }
 
     user: {
