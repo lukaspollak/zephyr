@@ -13,8 +13,22 @@ export async function main() {
    let failedExecs: Array<string> = [''];
    let pendingExecs: Array<string> = [''];
    let unexecutedExecs: Array<string> = [''];
-   let branch_proccess_argv = configZephyr.zephyrDefaultOptions.version;
-   let cycle_proccess_argv = configZephyr.zephyrDefaultOptions.cycle;
+   let argv1 = process.argv[1] as String;
+   let argv2 = process.argv[2] as String;
+   console.log(argv1, argv2)
+   let branch_proccess_argv;
+   let cycle_proccess_argv;
+
+   if (argv1 == '') {
+      branch_proccess_argv = configZephyr.zephyrDefaultOptions.version;
+      if (argv2 == '') {
+         cycle_proccess_argv = configZephyr.zephyrDefaultOptions.cycle;
+      } else {
+         branch_proccess_argv = argv1;
+      }
+   } else {
+      cycle_proccess_argv = argv2;
+   }
 
    if (branch_proccess_argv == undefined) {
       branch_proccess_argv = "";
@@ -33,7 +47,8 @@ export async function main() {
       return indexes;
    }
 
-   let allow_duplicity_of_cycles: boolean = configZephyr.zephyrDefaultOptions.skip_duplicityCycle_verify
+   let allow_duplicity_of_cycles: boolean = configZephyr.zephyrDefaultOptions.skip_duplicityCycle_verify;
+   let current_used_cycle_id: string = undefined;
    const unique = Array.from(new Set(crossids));
    while (indexOfCycle < unique.length) {
       let index = getAllIndexes(crossids, unique[indexOfCycle]);
@@ -41,11 +56,12 @@ export async function main() {
       let crossId: string = datas.getJiraCrosId(obj['description']);
       let issueId: string = await datas.getIsseuId(crossId);
 
-      await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv, allow_duplicity_of_cycles).then(async function (cycleId: any) {
+      await datas.getCycleId(branch_proccess_argv, cycle_proccess_argv, allow_duplicity_of_cycles, current_used_cycle_id).then(async function (cycleId: any) {
          // allowed only with first initialization, cause without it will report each test to new cycle
          allow_duplicity_of_cycles = false;
          try {
-            await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function (response: string) {
+            await datas.createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv).then(async function ([response, current_used_cycle]: string) {
+               current_used_cycle_id = current_used_cycle;
                let passed = true;
                let wip = false;
                let count_pending_its = 0;
