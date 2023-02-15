@@ -52,7 +52,7 @@ async function main() {
             try {
                 await datas
                     .createAndAssignExecution(issueId, cycleId, branch_proccess_argv, cycle_proccess_argv)
-                    .then(async function ([response, current_used_cycle]) {
+                    .then(async function ([execution_id, current_used_cycle]) {
                     current_used_cycle_id = current_used_cycle;
                     let passed = true;
                     let wip = false;
@@ -76,18 +76,18 @@ async function main() {
                     // >> y--, so test exec hash is not added to failed tests array and place is cleared for next created failed execution in next while cycle
                     if (passed == false && count_pending_its != index.length) {
                         if (count_failed_its > 0) {
-                            failedExecs[indexOfFailedExecs] = response;
+                            failedExecs[indexOfFailedExecs] = execution_id;
                             indexOfFailedExecs++;
                         }
                         await datas.updateJiraIssueStatus(crossId, 0);
                         await datas
-                            .bulkEditSteps(response, true)
+                            .bulkEditSteps(execution_id, true)
                             .then(async function () {
                             for (let z = 0; z < index.length; z++) {
                                 const obj2 = JSON.parse(data[index[z]]);
                                 if (obj2["passed"] == false) {
                                     try {
-                                        await datas.updateStepResult(obj2, issueId, response);
+                                        await datas.updateStepResult(obj2, issueId, execution_id);
                                     }
                                     catch (err) {
                                         console.error(err);
@@ -97,7 +97,7 @@ async function main() {
                         });
                     }
                     else if (passed == true) {
-                        passedExecs[indexOfPassedExecs] = response;
+                        passedExecs[indexOfPassedExecs] = execution_id;
                         indexOfPassedExecs++;
                         await datas.updateJiraIssueStatus(crossId, 1);
                     }
@@ -105,14 +105,14 @@ async function main() {
                         if (passed == false &&
                             count_failed_its > 0 &&
                             count_pending_its == 0) {
-                            failedExecs[indexOfFailedExecs] = response;
+                            failedExecs[indexOfFailedExecs] = execution_id;
                             indexOfFailedExecs++;
                             await datas.updateJiraIssueStatus(crossId, 0);
                         }
                         else if (passed == false &&
                             count_failed_its == 0 &&
                             count_pending_its > 0) {
-                            pendingExecs[indexOfPendingExecs] = response;
+                            pendingExecs[indexOfPendingExecs] = execution_id;
                             indexOfPendingExecs++;
                             await datas.updateJiraIssueStatus(crossId, 1);
                         }
@@ -120,7 +120,7 @@ async function main() {
                     else if (count_pending_its == index.length &&
                         passed == false &&
                         count_failed_its == 0) {
-                        unexecutedExecs[unexecutedExecsIndex] = response;
+                        unexecutedExecs[unexecutedExecsIndex] = execution_id;
                         unexecutedExecsIndex = unexecutedExecsIndex + 1;
                         await datas.updateJiraIssueStatus(crossId, 2);
                     }
@@ -134,10 +134,18 @@ async function main() {
         console.log("Importing", crossId);
         indexOfCycle++;
     }
-    await datas.bulkEditExecs(passedExecs, true);
-    await datas.bulkEditExecs(failedExecs, false);
-    await datas.bulkEditExecs(pendingExecs, false, true);
-    await datas.bulkEditExecs(unexecutedExecs, false, false, true);
+    if (passedExecs.length > 0) {
+        await datas.bulkEditExecs(passedExecs, true);
+    }
+    if (failedExecs.length > 0) {
+        await datas.bulkEditExecs(failedExecs, false);
+    }
+    if (pendingExecs.length > 0) {
+        await datas.bulkEditExecs(pendingExecs, false, true);
+    }
+    if (unexecutedExecs.length > 0) {
+        await datas.bulkEditExecs(unexecutedExecs, false);
+    }
     console.log("Passed", passedExecs);
     console.log("Failed", failedExecs);
     console.log("Pending", pendingExecs);

@@ -27,11 +27,11 @@ exports.getJWT = void 0;
 const jwt = __importStar(require("atlassian-jwt"));
 const moment = require("moment");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const path = require('path');
-const parent_dirname = path.join(__dirname, '../../..');
+const path = require("path");
+const parent_dirname = path.join(__dirname, "../../..");
 // get config from parent dir of node modules, so config.json should be placed there
-const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
-const configZephyrUser = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyr = require("/" + parent_dirname + "/configZephyr.json");
+const configZephyrUser = require("/" + parent_dirname + "/configZephyr.json");
 function getJWT(extendeApiCallUrl = "", typereq = "GET") {
     // define ACCESS from Config file
     const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
