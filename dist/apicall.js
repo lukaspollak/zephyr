@@ -1,21 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.postData = exports.putData = exports.getData = exports.postJiraData = exports.getJiraData = void 0;
-const auth = require('./jwt-auth');
+const auth = require("./jwt-auth");
 const request = require("request");
 // get parent dir name of node modules
-const path = require('path');
-const parent_dirname = path.join(__dirname, '../../..');
+const path = require("path");
+const parent_dirname = path.join(__dirname, "../../..");
 // get config from parent dir of node modules, so config.json should be placed there
-const configZephyr = require('/' + parent_dirname + '/configZephyr.json');
-const configZephyrUser = require('/' + parent_dirname + '/configZephyr.json');
+const configZephyr = require("/" + parent_dirname + "/configZephyr.json");
+const configZephyrUser = require("/" + parent_dirname + "/configZephyr.json");
 async function getJiraData(urlParams, login = "pollak@bart.sk", api_token = configZephyrUser.pollak.jira_token) {
-    const url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
+    const url = "https://crossuite.atlassian.net/rest/api/3/" + urlParams;
     const options = {
-        method: 'GET',
+        method: "GET",
         headers: {
-            'Authorization': `Basic ${Buffer.from(login + ':' + api_token).toString('base64')}`,
-            'Accept': 'application/json'
+            Authorization: `Basic ${Buffer.from(login + ":" + api_token).toString("base64")}`,
+            Accept: "application/json",
         },
     };
     function requestGet() {
@@ -32,16 +32,15 @@ async function getJiraData(urlParams, login = "pollak@bart.sk", api_token = conf
     return res;
 }
 exports.getJiraData = getJiraData;
-;
 async function postJiraData(urlParams, body, login = "pollak@bart.sk", api_token = configZephyrUser.pollak.jira_token) {
-    const url = 'https://crossuite.atlassian.net/rest/api/3/' + urlParams;
+    const url = "https://crossuite.atlassian.net/rest/api/3/" + urlParams;
     const options = {
-        method: 'POST',
+        method: "POST",
         headers: {
-            'Authorization': `Basic ${Buffer.from(login + ':' + api_token).toString('base64')}`,
-            'Content-Type': 'application/json'
+            Authorization: `Basic ${Buffer.from(login + ":" + api_token).toString("base64")}`,
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
     };
     function fetchpost() {
         return new Promise((resolve) => {
@@ -56,15 +55,15 @@ async function postJiraData(urlParams, body, login = "pollak@bart.sk", api_token
     return res;
 }
 exports.postJiraData = postJiraData;
-async function getData(extendeApiCallUrl = '/public/rest/api/1.0/teststep/15550?projectId=10000') {
+async function getData(extendeApiCallUrl = "/public/rest/api/1.0/teststep/15550?projectId=10000") {
     const JWT = auth.getJWT(extendeApiCallUrl);
     const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
     const baseUrl = configZephyr.zephyrDefaultOptions.base_api_call;
     const url = baseUrl + extendeApiCallUrl;
     const options = {
-        method: 'GET',
+        method: "GET",
         headers: {
-            Authorization: 'JWT ' + JWT,
+            Authorization: "JWT " + JWT,
             zapiAccessKey: accessKey,
         },
     };
@@ -82,17 +81,16 @@ async function getData(extendeApiCallUrl = '/public/rest/api/1.0/teststep/15550?
     return res;
 }
 exports.getData = getData;
-;
 async function putData(extendeApiCallUrl, bodyJSON) {
     const JWT = auth.getJWT(extendeApiCallUrl, "PUT");
     const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
     const baseUrl = configZephyr.zephyrDefaultOptions.base_api_call;
     const url = baseUrl + extendeApiCallUrl;
     const options = {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'JWT ' + JWT,
+            "Content-Type": "application/json",
+            Authorization: "JWT " + JWT,
             zapiAccessKey: accessKey,
         },
         body: JSON.stringify(bodyJSON),
@@ -110,17 +108,16 @@ async function putData(extendeApiCallUrl, bodyJSON) {
     return res;
 }
 exports.putData = putData;
-;
 async function postData(extendeApiCallUrl, bodyJSON) {
     const JWT = auth.getJWT(extendeApiCallUrl, "POST");
     const accessKey = configZephyrUser[configZephyr.zephyrDefaultOptions.executor].access_key;
     const baseUrl = configZephyr.zephyrDefaultOptions.base_api_call;
     const url = baseUrl + extendeApiCallUrl;
     const options = {
-        method: 'POST',
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'JWT ' + JWT,
+            "Content-Type": "application/json",
+            Authorization: "JWT " + JWT,
             zapiAccessKey: accessKey,
         },
         body: JSON.stringify(bodyJSON),
@@ -138,4 +135,3 @@ async function postData(extendeApiCallUrl, bodyJSON) {
     return res;
 }
 exports.postData = postData;
-;

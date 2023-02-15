@@ -5,7 +5,7 @@ const parent_dirname = path.join(__dirname, "../../..");
 // get config from parent dir of node modules, so config.json should be placed there
 const configZephyr = require("/" + parent_dirname + "/configZephyr.json");
 export async function main() {
-  console.log(parent_dirname)
+  console.log(parent_dirname);
   let [data, crossids] = await datas.getFilesData();
   //helps counter variables for cycles
   let indexOfCycle = 0,
@@ -18,18 +18,20 @@ export async function main() {
   let failedExecs: Array<string> = [""];
   let pendingExecs: Array<string> = [""];
   let unexecutedExecs: Array<string> = [""];
-  let branch_proccess_argv: string | String = configZephyr.zephyrDefaultOptions.version;
-  let cycle_proccess_argv: string | String = configZephyr.zephyrDefaultOptions.cycle;
+  let branch_proccess_argv: string | String =
+    configZephyr.zephyrDefaultOptions.version;
+  let cycle_proccess_argv: string | String =
+    configZephyr.zephyrDefaultOptions.cycle;
 
-  console.log(branch_proccess_argv)
-  console.log(cycle_proccess_argv)
+  console.log(branch_proccess_argv);
+  console.log(cycle_proccess_argv);
 
   if (branch_proccess_argv == "") {
-    console.log(branch_proccess_argv)
+    console.log(branch_proccess_argv);
     console.warn("Branch is not filled in config options arguments!");
   }
   if (cycle_proccess_argv == "") {
-    console.log(cycle_proccess_argv)
+    console.log(cycle_proccess_argv);
     console.warn("Cycle name is not filled in config options arguments!");
   }
 
@@ -70,7 +72,7 @@ export async function main() {
               branch_proccess_argv,
               cycle_proccess_argv
             )
-            .then(async function ([response, current_used_cycle]: string) {
+            .then(async function ([execution_id, current_used_cycle]: string) {
               current_used_cycle_id = current_used_cycle;
               let passed = true;
               let wip = false;
@@ -95,19 +97,23 @@ export async function main() {
               // >> y--, so test exec hash is not added to failed tests array and place is cleared for next created failed execution in next while cycle
               if (passed == false && count_pending_its != index.length) {
                 if (count_failed_its > 0) {
-                  failedExecs[indexOfFailedExecs] = response;
+                  failedExecs[indexOfFailedExecs] = execution_id;
                   indexOfFailedExecs++;
                 }
 
                 await datas.updateJiraIssueStatus(crossId, 0);
                 await datas
-                  .bulkEditSteps(response, true)
+                  .bulkEditSteps(execution_id, true)
                   .then(async function () {
                     for (let z = 0; z < index.length; z++) {
                       const obj2 = JSON.parse(data[index[z]]);
                       if (obj2["passed"] == false) {
                         try {
-                          await datas.updateStepResult(obj2, issueId, response);
+                          await datas.updateStepResult(
+                            obj2,
+                            issueId,
+                            execution_id
+                          );
                         } catch (err) {
                           console.error(err);
                         }
@@ -115,7 +121,7 @@ export async function main() {
                     }
                   });
               } else if (passed == true) {
-                passedExecs[indexOfPassedExecs] = response;
+                passedExecs[indexOfPassedExecs] = execution_id;
                 indexOfPassedExecs++;
                 await datas.updateJiraIssueStatus(crossId, 1);
               }
@@ -126,7 +132,7 @@ export async function main() {
                   count_failed_its > 0 &&
                   count_pending_its == 0
                 ) {
-                  failedExecs[indexOfFailedExecs] = response;
+                  failedExecs[indexOfFailedExecs] = execution_id;
                   indexOfFailedExecs++;
                   await datas.updateJiraIssueStatus(crossId, 0);
                 } else if (
@@ -134,7 +140,7 @@ export async function main() {
                   count_failed_its == 0 &&
                   count_pending_its > 0
                 ) {
-                  pendingExecs[indexOfPendingExecs] = response;
+                  pendingExecs[indexOfPendingExecs] = execution_id;
                   indexOfPendingExecs++;
                   await datas.updateJiraIssueStatus(crossId, 1);
                 }
@@ -143,7 +149,7 @@ export async function main() {
                 passed == false &&
                 count_failed_its == 0
               ) {
-                unexecutedExecs[unexecutedExecsIndex] = response;
+                unexecutedExecs[unexecutedExecsIndex] = execution_id;
                 unexecutedExecsIndex = unexecutedExecsIndex + 1;
                 await datas.updateJiraIssueStatus(crossId, 2);
               }
@@ -157,10 +163,18 @@ export async function main() {
     indexOfCycle++;
   }
 
-  await datas.bulkEditExecs(passedExecs, true);
-  await datas.bulkEditExecs(failedExecs, false);
-  await datas.bulkEditExecs(pendingExecs, false, true);
-  await datas.bulkEditExecs(unexecutedExecs, false, false, true);
+  if (passedExecs.length > 0) {
+    await datas.bulkEditExecs(passedExecs, true);
+  }
+  if (failedExecs.length > 0) {
+    await datas.bulkEditExecs(failedExecs, false);
+  }
+  if (pendingExecs.length > 0) {
+    await datas.bulkEditExecs(pendingExecs, false, true);
+  }
+  if (unexecutedExecs.length > 0) {
+    await datas.bulkEditExecs(unexecutedExecs, false);
+  }
 
   console.log("Passed", passedExecs);
   console.log("Failed", failedExecs);
