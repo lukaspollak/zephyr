@@ -46,21 +46,26 @@ async function getIdOfVersion(versionName, projectId = jiraProjectID) {
     let versions;
     let versionsJSON;
     let id = -1;
-    try {
-        versions = await apicall.getJiraData('project/' + projectId + '/versions');
-        versionsJSON = JSON.parse(versions);
-        for (let i in versionsJSON) {
-            if (versionsJSON[i].name === versionName) {
-                id = versionsJSON[i].id;
-                return id;
+    if (versionName != "development") {
+        try {
+            versions = await apicall.getJiraData('project/' + projectId + '/versions');
+            versionsJSON = JSON.parse(versions);
+            for (let i in versionsJSON) {
+                if (versionsJSON[i].name.includes(versionName)) {
+                    id = versionsJSON[i].id;
+                    return id;
+                }
             }
         }
+        catch (err) {
+            console.log('Versions call troubles!', err);
+        }
     }
-    catch (err) {
-        console.log('Versions call troubles!', err);
+    else if (versionName === "development") {
+        id = -1;
     }
     if (id === -1) {
-        console.log('Version does not exist or it is Ad Hoc!');
+        console.log('Version does not exist or u wanna run test as Ad Hoc!');
         return id;
     }
 }
@@ -85,7 +90,7 @@ async function createCycle(branch, custom_cycle_name = '', projectId = jiraProje
     if (custom_cycle_name != '') {
         cycleName = custom_cycle_name;
         environment = 'TEST';
-        description = 'Tests was runned during release period as custom release cycle!';
+        description = 'Tests was runned as custom release cycle!';
     }
     version = branch.split('/').pop();
     try {
@@ -109,33 +114,44 @@ async function createCycle(branch, custom_cycle_name = '', projectId = jiraProje
     return cycle_id;
 }
 exports.createCycle = createCycle;
-async function getCycleId(branch, cycleName = '', projectId = jiraProjectID) {
+async function getCycleId(branch, cycleName = '', skip_duplicity_verify = false, current_used_cycle_id = undefined, projectId = jiraProjectID) {
     let response;
     let cycle_id = -1;
-    const splittedVersion = branch.split('/', 2);
-    const versionName = splittedVersion[1];
-    if (cycleName == '') {
-        cycleName = splittedVersion[0];
-    }
-    await getIdOfVersion(versionName).then(async function (versionID) {
-        if (versionID != -1) {
-            response = await apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId);
-            const cycleJSON = JSON.parse(response);
-            for (let i in cycleJSON) {
-                if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
-                    cycle_id = cycleJSON[i].id;
-                    return cycle_id;
+    if (current_used_cycle_id == undefined) {
+        if (skip_duplicity_verify == false) {
+            const splittedVersion = branch.split('/', 2);
+            const versionName = splittedVersion[1];
+            if (cycleName == '') {
+                cycleName = splittedVersion[0];
+            }
+            await getIdOfVersion(versionName).then(async function (versionID) {
+                if (versionID != -1) {
+                    response = await apicall.getData(ZephyrApiVersion + '/cycles/search?versionId=' + versionID + '&' + 'projectId=' + projectId);
+                    const cycleJSON = JSON.parse(response);
+                    for (let i in cycleJSON) {
+                        if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
+                            cycle_id = cycleJSON[i].id;
+                            return cycle_id;
+                        }
+                    }
+                    if (cycle_id == -1) {
+                        console.log('Cycle does not exist!');
+                        return cycle_id;
+                    }
                 }
-            }
-            if (cycle_id == -1) {
-                console.log('Cycle does not exist!');
-                return cycle_id;
-            }
+                else {
+                    console.error("Version does not Exist!");
+                }
+            });
         }
-        else {
-            console.error("Version does not Exist!");
+        else if (skip_duplicity_verify == true) {
+            cycle_id = -1;
         }
-    });
+    }
+    else {
+        cycle_id = current_used_cycle_id;
+    }
+    // console.log(cycle_id);
     return cycle_id;
 }
 exports.getCycleId = getCycleId;
@@ -160,12 +176,12 @@ async function createAndAssignExecution(jiraIssueID = '', cycleId, branch, custo
     }
     if (cycleId == -1) {
         console.log('Creating cycle ...');
-        const response = await this.createExecution(jiraIssueID, await this.createCycle(branch, custom_cycle_name), versionID);
-        return response;
+        const [exec_id, cycle_id] = await this.createExecution(jiraIssueID, await this.createCycle(branch, custom_cycle_name), versionID);
+        return [exec_id, cycle_id];
     }
     else {
-        const response = await this.createExecution(jiraIssueID, cycleId, versionID);
-        return response;
+        const [exec_id, cycle_id] = await this.createExecution(jiraIssueID, cycleId, versionID);
+        return [exec_id, cycle_id];
     }
 }
 exports.createAndAssignExecution = createAndAssignExecution;
@@ -187,7 +203,7 @@ async function createExecution(jiraIssueID = '', cycleId = -1, versionID = -1) {
     try {
         const data = await apicall.postData(ZephyrApiVersion + '/execution', body);
         const json = JSON.parse(data);
-        return json['execution']['id'];
+        return [json['execution']['id'], cycleId];
     }
     catch (err) {
         console.log('Execution error:', err);
@@ -257,11 +273,11 @@ async function updateStepResult(obj, issueId, execId) {
     if (selectedSteps.includes(step)) {
         const indexOfStep = selectedSteps.indexOf(step);
         id = selectedStepsIds[indexOfStep];
-        let stepId = stepResult.stepResults[indexOfStep]['stepId'];
+        // let stepId = stepResult.stepResults[indexOfStep]['stepId'];
         stepResultId = stepResult.stepResults[indexOfStep]['id'];
-        console.log("Issue id:", issueId);
-        console.log("It Description:", step);
-        console.log("Console message:", console_log);
+        // console.log("Issue id:", issueId);
+        // console.log("It Description:", step);
+        // console.log("Console message:", console_log);
         if (pending == true) {
             resultOfTest = 3;
         }
