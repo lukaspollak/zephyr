@@ -8,7 +8,7 @@ const parent_dirname = path.join(__dirname, "../../..");
 // get config from parent dir of node modules, so config.json should be placed there
 const configZephyr = require("/" + parent_dirname + "/configZephyr.json");
 async function main() {
-    console.log(parent_dirname);
+    console.info("Reporting from: " + parent_dirname + "/reports");
     let [data, crossids] = await datas.getFilesData();
     //helps counter variables for cycles
     let indexOfCycle = 0, j = 0;
@@ -19,8 +19,8 @@ async function main() {
     let unexecutedExecs = [""];
     let branch_proccess_argv = configZephyr.zephyrDefaultOptions.version;
     let cycle_proccess_argv = configZephyr.zephyrDefaultOptions.cycle;
-    console.log(branch_proccess_argv);
-    console.log(cycle_proccess_argv);
+    console.info("Reporting from cycle branch: " + branch_proccess_argv);
+    // console.log(cycle_proccess_argv);
     if (branch_proccess_argv == "") {
         console.log(branch_proccess_argv);
         console.warn("Branch is not filled in config options arguments!");
@@ -134,17 +134,25 @@ async function main() {
         console.log("Importing", crossId);
         indexOfCycle++;
     }
-    if (passedExecs.length > 0) {
+    if (passedExecs[0] != "") {
+        // console.log("Importing bulk passed");
+        // console.log(passedExecs);
         await datas.bulkEditExecs(passedExecs, true);
     }
-    if (failedExecs.length > 0) {
+    if (failedExecs[0] != "") {
+        // console.log("Importing bulk failed");
+        // console.log(failedExecs);
         await datas.bulkEditExecs(failedExecs, false);
     }
-    if (pendingExecs.length > 0) {
+    if (pendingExecs[0] != "") {
+        // console.log("Importing bulk pending");
+        // console.log(pendingExecs);
         await datas.bulkEditExecs(pendingExecs, false, true);
     }
-    if (unexecutedExecs.length > 0) {
-        await datas.bulkEditExecs(unexecutedExecs, false);
+    if (unexecutedExecs[0] != "") {
+        // console.log("Importing bulk unexecuted");
+        // console.log(unexecutedExecs);
+        await datas.bulkEditExecs(unexecutedExecs, false, false, true);
     }
     console.log("Passed", passedExecs);
     console.log("Failed", failedExecs);
