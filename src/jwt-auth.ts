@@ -34,3 +34,5 @@ export function getJWT(extendeApiCallUrl: string = "", typereq = "GET") {
   const token: string = jwt.encodeSymmetric(tokenData, secretKey);
   return token;
 }
+
+// console.log(getJWT());

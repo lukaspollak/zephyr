@@ -441,7 +441,7 @@ export async function execs(path: string = testFolder) {
   let i = 0;
   async function getFiles() {
     return new Promise<any>((resolve) => {
-      fs.readdir(testFolder, async (err: any, files: any[]) => {
+      fs.readdir(path, async (err: any, files: any[]) => {
         resolve(files);
       });
     });
@@ -453,32 +453,48 @@ export async function execs(path: string = testFolder) {
 }
 
 export async function getFilesData(path: string = testFolder) {
-  const res = await execs();
-  let i: number = 0;
-  let j: number = 0;
-  let data: Array<string> = [];
-  let crosids: Array<string> = [];
-  async function getJson(file: any) {
-    return await new Promise<any>((resolve) => {
-      fs.readFile(path + file, "utf8", async function (err: any, data: any) {
-        resolve(data);
+  const files = await execs(path);
+  let data: string[] = [];
+  let crosids: string[] = [];
+
+  function getJson(file: string) {
+    return new Promise<string>((resolve, reject) => {
+      fs.readFile(path + file, "utf8", (err, data) => {
+        if (err) reject(err);
+        else resolve(data);
       });
     });
   }
-  const resJson = await getJson(res).then(function (result: any) {
-    return result;
-  });
 
-  while (i < res.length) {
-    data[i] = await getJson(res[i]).then(function (result: any) {
-      const obj = JSON.parse(result);
-      crosids[i] = getTestId(obj["description"]);
-      i = i + 1;
-      return result;
-    });
+  for (let i = 0; i < files.length; i++) {
+    const content = await getJson(files[i]);
+    const json = JSON.parse(content);
+
+    if (!json.suites || !Array.isArray(json.suites)) continue;
+
+    for (const suite of json.suites) {
+      const description = suite.name || "";
+      const testId = getTestId(description);
+
+      if (!suite.tests || !Array.isArray(suite.tests)) continue;
+
+      for (const test of suite.tests) {
+        if (!test.name) continue;
+
+        test.suiteName = suite.name; // pre neskoršie použitie v main.ts
+        data.push(JSON.stringify(test));
+        crosids.push(testId);
+      }
+    }
   }
+
   return [data, crosids];
 }
+
+getFilesData().then(([_, crosids]) => {
+  console.log("CROS IDs:");
+  crosids.forEach((id) => console.log(id));
+});
 
 export async function updateJiraIssueStatus(
   issueCrosID: string,
