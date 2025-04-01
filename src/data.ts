@@ -467,34 +467,39 @@ export async function getFilesData(path: string = testFolder) {
   }
 
   for (let i = 0; i < files.length; i++) {
-    const content = await getJson(files[i]);
-    const json = JSON.parse(content);
+    try {
+      const content = await getJson(files[i]);
+      const json = JSON.parse(content);
 
-    if (!json.suites || !Array.isArray(json.suites)) continue;
+      if (!json.suites || !Array.isArray(json.suites)) continue;
 
-    for (const suite of json.suites) {
-      const description = suite.name || "";
-      const testId = getTestId(description);
+      for (const suite of json.suites) {
+        const description = suite.name || "";
+        const testId = getTestId(description);
 
-      if (!suite.tests || !Array.isArray(suite.tests)) continue;
+        if (!testId) {
+          console.warn(`Skipped file ${files[i]}: could not extract testId from suite name '${suite.name}'`);
+          continue;
+        }
 
-      for (const test of suite.tests) {
-        if (!test.name) continue;
+        if (!suite.tests || !Array.isArray(suite.tests)) continue;
 
-        test.suiteName = suite.name; // pre neskoršie použitie v main.ts
-        data.push(JSON.stringify(test));
-        crosids.push(testId);
+        for (const test of suite.tests) {
+          if (!test.name) continue;
+
+          test.suiteName = suite.name;
+          data.push(JSON.stringify(test));
+          crosids.push(testId);
+        }
       }
+    } catch (err) {
+      console.error(`Failed to parse file ${files[i]}:`, err);
+      continue;
     }
   }
 
   return [data, crosids];
 }
-
-getFilesData().then(([_, crosids]) => {
-  console.log("CROS IDs:");
-  crosids.forEach((id) => console.log(id));
-});
 
 export async function updateJiraIssueStatus(
   issueCrosID: string,

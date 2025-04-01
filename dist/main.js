@@ -1,11 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.main = void 0;
+const path_1 = __importDefault(require("path"));
 const datas = require("./data");
-// get parent dir name of node modules
-const path = require("path");
-const parent_dirname = path.join(__dirname, "../../..");
-// get config from parent dir of node modules, so config.json should be placed there
+const parent_dirname = path_1.default.join(__dirname, "../../..");
 const configZephyr = require("/" + parent_dirname + "/configZephyr.json");
 async function main() {
     console.info("Reporting...");
@@ -40,17 +41,17 @@ async function main() {
             let count_failed_its = 0;
             for (j = 0; j < index.length; j++) {
                 const obj2 = JSON.parse(data[index[j]]);
-                if (obj2.passed === false && obj2.pending === false) {
+                if (obj2.state === "failed") {
                     count_failed_its++;
                     passed = false;
                 }
-                if (obj2.pending === true) {
+                if (obj2.state === "skipped") {
                     count_pending_its++;
                     passed = false;
                     wip = true;
                 }
             }
-            if (passed === false && count_pending_its !== index.length) {
+            if (!passed && count_pending_its !== index.length) {
                 if (count_failed_its > 0) {
                     failedExecs[indexOfFailedExecs++] = execution_id;
                 }
@@ -58,12 +59,16 @@ async function main() {
                 await datas.bulkEditSteps(execution_id, true);
                 for (let z = 0; z < index.length; z++) {
                     const obj2 = JSON.parse(data[index[z]]);
-                    if (obj2.passed === false) {
+                    if (obj2.state === "failed") {
+                        obj2.description = `${obj2.name}|${obj2.suiteName}`;
+                        obj2.message = obj2.error || "";
+                        obj2.passed = false;
+                        obj2.pending = false;
                         await datas.updateStepResult(obj2, issueId, execution_id);
                     }
                 }
             }
-            else if (passed === true) {
+            else if (passed) {
                 passedExecs[indexOfPassedExecs++] = execution_id;
                 await datas.updateJiraIssueStatus(crossId, 1);
             }

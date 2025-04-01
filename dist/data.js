@@ -400,31 +400,37 @@ async function getFilesData(path = testFolder) {
         });
     }
     for (let i = 0; i < files.length; i++) {
-        const content = await getJson(files[i]);
-        const json = JSON.parse(content);
-        if (!json.suites || !Array.isArray(json.suites))
-            continue;
-        for (const suite of json.suites) {
-            const description = suite.name || "";
-            const testId = getTestId(description);
-            if (!suite.tests || !Array.isArray(suite.tests))
+        try {
+            const content = await getJson(files[i]);
+            const json = JSON.parse(content);
+            if (!json.suites || !Array.isArray(json.suites))
                 continue;
-            for (const test of suite.tests) {
-                if (!test.name)
+            for (const suite of json.suites) {
+                const description = suite.name || "";
+                const testId = getTestId(description);
+                if (!testId) {
+                    console.warn(`Skipped file ${files[i]}: could not extract testId from suite name '${suite.name}'`);
                     continue;
-                test.suiteName = suite.name; // pre neskoršie použitie v main.ts
-                data.push(JSON.stringify(test));
-                crosids.push(testId);
+                }
+                if (!suite.tests || !Array.isArray(suite.tests))
+                    continue;
+                for (const test of suite.tests) {
+                    if (!test.name)
+                        continue;
+                    test.suiteName = suite.name;
+                    data.push(JSON.stringify(test));
+                    crosids.push(testId);
+                }
             }
+        }
+        catch (err) {
+            console.error(`Failed to parse file ${files[i]}:`, err);
+            continue;
         }
     }
     return [data, crosids];
 }
 exports.getFilesData = getFilesData;
-getFilesData().then(([_, crosids]) => {
-    console.log("CROS IDs:");
-    crosids.forEach((id) => console.log(id));
-});
 async function updateJiraIssueStatus(issueCrosID, status) {
     let body;
     const urlParams = "issue/" + issueCrosID + "/transitions";
