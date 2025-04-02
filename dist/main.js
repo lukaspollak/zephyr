@@ -51,30 +51,16 @@ async function main() {
                     wip = true;
                 }
             }
+            await datas.bulkEditSteps(execution_id, true);
             for (const i of index) {
                 const obj2 = JSON.parse(data[i]);
-                obj2.description = `${obj2.name}|${obj2.suiteName}`;
-                obj2.message = obj2.error || "";
-                if (obj2.state === "failed") {
-                    count_failed_its++;
-                    passed = false;
+                if (obj2.state === "failed" || obj2.state === "skipped") {
+                    obj2.description = `${obj2.name}|${obj2.suiteName}`;
+                    obj2.message = obj2.error || "";
                     obj2.passed = false;
-                    obj2.pending = false;
+                    obj2.pending = obj2.state === "skipped";
                     await datas.updateStepResult(obj2, issueId, execution_id);
                 }
-                else if (obj2.state === "skipped") {
-                    count_pending_its++;
-                    passed = false;
-                    obj2.passed = false;
-                    obj2.pending = true;
-                    await datas.updateStepResult(obj2, issueId, execution_id);
-                }
-            }
-            if (passed) {
-                passedExecs.push(execution_id);
-                await datas.updateJiraIssueStatus(crossId, 1);
-                await datas.bulkEditSteps(execution_id, true); // <--- teraz je to bezpečné
-                await datas.bulkEditExecs([execution_id], true);
             }
             if (!passed && count_pending_its !== index.length) {
                 if (count_failed_its > 0) {
