@@ -9,8 +9,9 @@ export declare function createAndAssignExecution(jiraIssueID: string, cycleId: a
 export declare function createExecution(jiraIssueID?: string, cycleId?: any, versionID?: any): Promise<any[]>;
 export declare function bulkEditExecs(execs: Array<string>, status: boolean, pending?: boolean, unexecuted?: boolean): Promise<void>;
 export declare function bulkEditSteps(exec: string, status: boolean): Promise<void>;
-export declare function putStepResult(execId: string, issueId: string, stepResultId: string, resultOfTest: string, console_log?: string): Promise<void>;
+export declare function putStepResult(execId: string, issueId: string, stepResultId: string, resultOfTest: number, // <-- zmena tu
+console_log?: string): Promise<void>;
 export declare function updateStepResult(obj: any, issueId: string, execId: string): Promise<void>;
-export declare function execs(path?: string): Promise<any>;
+export declare function execs(path?: string): Promise<string[]>;
 export declare function getFilesData(path?: string): Promise<string[][]>;
 export declare function updateJiraIssueStatus(issueCrosID: string, status: number): Promise<boolean>;

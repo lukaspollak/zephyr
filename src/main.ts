@@ -9,7 +9,7 @@ export async function main() {
   console.info("Reporting...");
   let [data, crossids] = await datas.getFilesData();
 
-  let indexOfCycle = 0, j = 0;
+  let indexOfCycle = 0;
   let indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOfPendingExecs = 0, unexecutedExecsIndex = 0;
   let passedExecs: string[] = [""], failedExecs: string[] = [""], pendingExecs: string[] = [""], unexecutedExecs: string[] = [""];
 
@@ -44,7 +44,7 @@ export async function main() {
       let count_pending_its = 0;
       let count_failed_its = 0;
 
-      for (j = 0; j < index.length; j++) {
+      for (let j = 0; j < index.length; j++) {
         const obj2 = JSON.parse(data[index[j]]);
         if (obj2.state === "failed") {
           count_failed_its++;
@@ -63,21 +63,19 @@ export async function main() {
         }
 
         await datas.updateJiraIssueStatus(crossId, 0);
-        await datas.bulkEditSteps(execution_id, true);
 
         for (let z = 0; z < index.length; z++) {
           const obj2 = JSON.parse(data[index[z]]);
-          if (obj2.state === "failed") {
-            obj2.description = `${obj2.name}|${obj2.suiteName}`;
-            obj2.message = obj2.error || "";
-            obj2.passed = false;
-            obj2.pending = false;
-            await datas.updateStepResult(obj2, issueId, execution_id);
-          }
+          obj2.description = `${obj2.name}|${obj2.suiteName}`;
+          obj2.message = obj2.error || "";
+          obj2.passed = obj2.state === "passed";
+          obj2.pending = obj2.state === "skipped";
+          await datas.updateStepResult(obj2, issueId, execution_id);
         }
       } else if (passed) {
         passedExecs[indexOfPassedExecs++] = execution_id;
         await datas.updateJiraIssueStatus(crossId, 1);
+        await datas.bulkEditSteps(execution_id, true);
       }
 
       if (wip && count_pending_its !== index.length) {

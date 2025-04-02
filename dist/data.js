@@ -133,8 +133,15 @@ async function getCycleId(branch, cycleName = "", skip_duplicity_verify = false,
                         "projectId=" +
                         projectId);
                     const cycleJSON = JSON.parse(response);
+                    if (!cycleJSON || !Array.isArray(cycleJSON)) {
+                        console.error("Unexpected response for cycles!");
+                        return -1;
+                    }
                     for (let i in cycleJSON) {
-                        if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
+                        const name = cycleJSON[i]?.name;
+                        if (!name)
+                            continue;
+                        if (name.toLowerCase() === cycleName.toLowerCase()) {
                             cycle_id = cycleJSON[i].id;
                             return cycle_id;
                         }
@@ -156,7 +163,6 @@ async function getCycleId(branch, cycleName = "", skip_duplicity_verify = false,
     else {
         cycle_id = current_used_cycle_id;
     }
-    // console.log(cycle_id);
     return cycle_id;
 }
 exports.getCycleId = getCycleId;
@@ -238,9 +244,7 @@ exports.createExecution = createExecution;
 // createExecution('24452','4c544096-cb8a-4d5f-9030-a31ae60e44a6','10737');
 async function bulkEditExecs(execs, status, pending = false, unexecuted = false) {
     let body;
-    if (unexecuted == true) {
-        status = null;
-        pending = null;
+    if (unexecuted === true) {
         body = {
             executions: execs,
             status: -1,
@@ -249,7 +253,7 @@ async function bulkEditExecs(execs, status, pending = false, unexecuted = false)
             stepStatus: -1,
         };
     }
-    if (status == true && pending == false) {
+    else if (status === true && !pending) {
         body = {
             executions: execs,
             status: 1,
@@ -258,7 +262,7 @@ async function bulkEditExecs(execs, status, pending = false, unexecuted = false)
             stepStatus: 1,
         };
     }
-    else if (status == false && pending == false) {
+    else if (status === false && !pending) {
         body = {
             executions: execs,
             status: 2,
@@ -267,13 +271,13 @@ async function bulkEditExecs(execs, status, pending = false, unexecuted = false)
             stepStatus: -1,
         };
     }
-    else if (status == false && pending == true) {
+    else if (status === false && pending) {
         body = {
             executions: execs,
             status: 3,
             clearDefectMappingFlag: false,
             testStepStatusChangeFlag: false,
-            stepStatus: 3,
+            stepStatus: -1,
         };
     }
     await apicall.postData(ZephyrApiVersion + "/executions", body);
@@ -303,25 +307,20 @@ async function bulkEditSteps(exec, status) {
     await apicall.postData(ZephyrApiVersion + "/executions", body);
 }
 exports.bulkEditSteps = bulkEditSteps;
-async function putStepResult(execId, issueId, stepResultId, resultOfTest, console_log = "Passed.") {
+async function putStepResult(execId, issueId, stepResultId, resultOfTest, // <-- zmena tu
+console_log = "Passed.") {
     const body = {
         executionId: execId,
         issueId: issueId,
         comment: console_log,
         status: { id: resultOfTest, description: console_log },
     };
-    await new Promise((resolve) => {
-        try {
-            apicall
-                .putData(ZephyrApiVersion + "/stepresult/" + stepResultId, body)
-                .then(function (response) {
-                resolve(response);
-            });
-        }
-        catch (err) {
-            console.error(err);
-        }
-    });
+    try {
+        await apicall.putData(ZephyrApiVersion + "/stepresult/" + stepResultId, body);
+    }
+    catch (err) {
+        console.error(err);
+    }
 }
 exports.putStepResult = putStepResult;
 async function updateStepResult(obj, issueId, execId) {
@@ -338,7 +337,9 @@ async function updateStepResult(obj, issueId, execId) {
     let id;
     let stepResultId;
     let step = getTestIT(obj["description"]);
-    let console_log = obj["message"].toString();
+    let console_log = Array.isArray(obj["message"])
+        ? obj["message"].join(" | ")
+        : obj["message"]?.toString() ?? "";
     let resultOfTest = 1;
     const passed = obj["passed"];
     const pending = obj["pending"];
@@ -347,23 +348,23 @@ async function updateStepResult(obj, issueId, execId) {
     if (selectedSteps.includes(step)) {
         const indexOfStep = selectedSteps.indexOf(step);
         id = selectedStepsIds[indexOfStep];
-        // let stepId = stepResult.stepResults[indexOfStep]['stepId'];
         stepResultId = stepResult.stepResults[indexOfStep]["id"];
-        // console.log("Issue id:", issueId);
-        // console.log("It Description:", step);
-        // console.log("Console message:", console_log);
-        if (pending == true) {
+        if (pending === true) {
             resultOfTest = 3;
         }
-        else if (pending == false) {
-            if (passed == true) {
-                resultOfTest = 1;
-            }
-            else if (passed == false) {
+        else if (passed === true) {
+            if (console_log.includes("screenshot did not match") ||
+                console_log.includes("Expected")) {
                 resultOfTest = 2;
             }
+            else {
+                resultOfTest = 1;
+            }
         }
-        await this.putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
+        else {
+            resultOfTest = 2;
+        }
+        await putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
     }
     else {
         console.error("Not matched it, please compare test it('description') definition and JIRA steps definition!");
@@ -371,18 +372,13 @@ async function updateStepResult(obj, issueId, execId) {
 }
 exports.updateStepResult = updateStepResult;
 async function execs(path = testFolder) {
-    let i = 0;
-    async function getFiles() {
-        return new Promise((resolve) => {
-            fs.readdir(path, async (err, files) => {
-                resolve(files);
-            });
+    return new Promise((resolve, reject) => {
+        fs.readdir(path, (err, files) => {
+            if (err)
+                return reject(err);
+            resolve(files);
         });
-    }
-    const res = await getFiles().then(function (result) {
-        return result;
     });
-    return res;
 }
 exports.execs = execs;
 async function getFilesData(path = testFolder) {
@@ -418,6 +414,7 @@ async function getFilesData(path = testFolder) {
                     if (!test.name)
                         continue;
                     test.suiteName = suite.name;
+                    test.description = `${test.name} | ${testId}`; // ensure description includes identifier
                     data.push(JSON.stringify(test));
                     crosids.push(testId);
                 }
@@ -432,26 +429,24 @@ async function getFilesData(path = testFolder) {
 }
 exports.getFilesData = getFilesData;
 async function updateJiraIssueStatus(issueCrosID, status) {
-    let body;
-    const urlParams = "issue/" + issueCrosID + "/transitions";
-    // passed
-    if (status == 1) {
-        body = { transition: { id: "51" } };
+    const transitionMap = {
+        1: "51",
+        0: "41",
+        2: "91", // skipped
+    };
+    const transitionId = transitionMap[status];
+    if (!transitionId) {
+        console.error(`Invalid status: ${status}`);
+        return false;
     }
-    // fail
-    if (status == 0) {
-        body = { transition: { id: "41" } };
-    }
-    // skipped
-    if (status == 2) {
-        body = { transition: { id: "91" } };
-    }
+    const body = { transition: { id: transitionId } };
+    const urlParams = `issue/${issueCrosID}/transitions`;
     try {
         await apicall.postJiraData(urlParams, body);
         return true;
     }
-    catch {
-        console.error("Status of Jira issue is not updated!");
+    catch (e) {
+        console.error("Status of Jira issue is not updated!", e);
         return false;
     }
 }
