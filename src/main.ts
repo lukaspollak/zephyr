@@ -48,19 +48,18 @@ export async function main() {
 
       for (const i of index) {
         const obj2 = JSON.parse(data[i]);
+        obj2.description = `${obj2.name}|${obj2.suiteName}`;
+        obj2.message = obj2.error || "";
+
         if (obj2.state === "failed") {
           count_failed_its++;
           passed = false;
-          obj2.description = `${obj2.name}|${obj2.suiteName}`;
-          obj2.message = obj2.error || "";
           obj2.passed = false;
           obj2.pending = false;
           await datas.updateStepResult(obj2, issueId, execution_id);
         } else if (obj2.state === "skipped") {
           count_pending_its++;
           passed = false;
-          obj2.description = `${obj2.name}|${obj2.suiteName}`;
-          obj2.message = obj2.error || "";
           obj2.passed = false;
           obj2.pending = true;
           await datas.updateStepResult(obj2, issueId, execution_id);
@@ -86,11 +85,11 @@ export async function main() {
       console.error("Failed to process", crossId, err);
     }
   }
-
-  if (passedExecs.length > 0) await datas.bulkEditExecs(passedExecs, true);
-  if (failedExecs.length > 0) await datas.bulkEditExecs(failedExecs, false);
-  if (pendingExecs.length > 0) await datas.bulkEditExecs(pendingExecs, false, true);
-  if (unexecutedExecs.length > 0) await datas.bulkEditExecs(unexecutedExecs, false, false, true);
+  
+  passedExecs.length > 0 && datas.bulkEditExecs(passedExecs, true),
+  failedExecs.length > 0 && datas.bulkEditExecs(failedExecs, false),
+  pendingExecs.length > 0 && datas.bulkEditExecs(pendingExecs, false, true),
+  unexecutedExecs.length > 0 && datas.bulkEditExecs(unexecutedExecs, false, false, true)
 
   console.log("Passed", passedExecs);
   console.log("Failed", failedExecs);
