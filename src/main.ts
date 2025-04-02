@@ -9,28 +9,29 @@ export async function main() {
   console.info("Reporting...");
   let [data, crossids] = await datas.getFilesData();
 
-  let indexOfCycle = 0, j = 0;
-  let indexOfPassedExecs = 0, indexOfFailedExecs = 0, indexOfPendingExecs = 0, unexecutedExecsIndex = 0;
-  let passedExecs: string[] = [""], failedExecs: string[] = [""], pendingExecs: string[] = [""], unexecutedExecs: string[] = [""];
-
   const branch = configZephyr.zephyrDefaultOptions.version;
   const cycle = configZephyr.zephyrDefaultOptions.cycle;
   let allowDuplicateCycles = configZephyr.zephyrDefaultOptions.skip_duplicityCycle_verify;
   let current_used_cycle_id: string = undefined;
 
+  const passedExecs: string[] = [];
+  const failedExecs: string[] = [];
+  const pendingExecs: string[] = [];
+  const unexecutedExecs: string[] = [];
+
   const unique = Array.from(new Set(crossids));
 
   function getAllIndexes(arr: any[], val: any) {
     let indexes = [], i = -1;
-    while ((i = arr.indexOf(val, i + 1)) != -1) indexes.push(i);
+    while ((i = arr.indexOf(val, i + 1)) !== -1) indexes.push(i);
     return indexes;
   }
 
-  while (indexOfCycle < unique.length) {
-    let index = getAllIndexes(crossids, unique[indexOfCycle]);
-    let obj = JSON.parse(data[index[0]]);
-    let crossId: string = datas.getJiraCrosId(obj["suiteName"]);
-    let issueId: string = await datas.getIsseuId(crossId);
+  for (const testId of unique) {
+    const index = getAllIndexes(crossids, testId);
+    const obj = JSON.parse(data[index[0]]);
+    const crossId: string = datas.getJiraCrosId(obj["suiteName"]);
+    const issueId: string = await datas.getIsseuId(crossId);
 
     const cycleId = await datas.getCycleId(branch, cycle, allowDuplicateCycles, current_used_cycle_id);
     allowDuplicateCycles = false;
@@ -40,70 +41,56 @@ export async function main() {
       current_used_cycle_id = current_used_cycle;
 
       let passed = true;
-      let wip = false;
-      let count_pending_its = 0;
       let count_failed_its = 0;
+      let count_pending_its = 0;
 
-      for (j = 0; j < index.length; j++) {
-        const obj2 = JSON.parse(data[index[j]]);
+      await datas.bulkEditSteps(execution_id, true); // prednastav vsetky stepy ako passed
+
+      for (const i of index) {
+        const obj2 = JSON.parse(data[i]);
         if (obj2.state === "failed") {
           count_failed_its++;
           passed = false;
-        }
-        if (obj2.state === "skipped") {
-          count_pending_its++;
-          passed = false;
-          wip = true;
-        }
-      }
-
-      await datas.bulkEditSteps(execution_id, true); // set all steps to passed first
-
-      for (let z = 0; z < index.length; z++) {
-        const obj2 = JSON.parse(data[index[z]]);
-        if (obj2.state === "failed" || obj2.state === "skipped") {
           obj2.description = `${obj2.name}|${obj2.suiteName}`;
           obj2.message = obj2.error || "";
           obj2.passed = false;
-          obj2.pending = obj2.state === "skipped";
+          obj2.pending = false;
+          await datas.updateStepResult(obj2, issueId, execution_id);
+        } else if (obj2.state === "skipped") {
+          count_pending_its++;
+          passed = false;
+          obj2.description = `${obj2.name}|${obj2.suiteName}`;
+          obj2.message = obj2.error || "";
+          obj2.passed = false;
+          obj2.pending = true;
           await datas.updateStepResult(obj2, issueId, execution_id);
         }
       }
 
-      if (!passed && count_pending_its !== index.length) {
-        if (count_failed_its > 0) {
-          failedExecs[indexOfFailedExecs++] = execution_id;
-        }
+      if (passed) {
+        passedExecs.push(execution_id);
+        await datas.updateJiraIssueStatus(crossId, 1);
+      } else if (count_failed_its > 0) {
+        failedExecs.push(execution_id);
         await datas.updateJiraIssueStatus(crossId, 0);
-      } else if (passed) {
-        passedExecs[indexOfPassedExecs++] = execution_id;
+      } else if (count_pending_its === index.length) {
+        unexecutedExecs.push(execution_id);
+        await datas.updateJiraIssueStatus(crossId, 2);
+      } else {
+        pendingExecs.push(execution_id);
         await datas.updateJiraIssueStatus(crossId, 1);
       }
 
-      if (wip && count_pending_its !== index.length) {
-        if (!passed && count_failed_its > 0 && count_pending_its === 0) {
-          failedExecs[indexOfFailedExecs++] = execution_id;
-          await datas.updateJiraIssueStatus(crossId, 0);
-        } else if (!passed && count_failed_its === 0 && count_pending_its > 0) {
-          pendingExecs[indexOfPendingExecs++] = execution_id;
-          await datas.updateJiraIssueStatus(crossId, 1);
-        }
-      } else if (count_pending_its === index.length && !passed && count_failed_its === 0) {
-        unexecutedExecs[unexecutedExecsIndex++] = execution_id;
-        await datas.updateJiraIssueStatus(crossId, 2);
-      }
+      console.log("Imported", crossId);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to process", crossId, err);
     }
-
-    console.log("Importing", crossId);
-    indexOfCycle++;
   }
 
-  if (passedExecs[0] !== "") await datas.bulkEditExecs(passedExecs, true);
-  if (failedExecs[0] !== "") await datas.bulkEditExecs(failedExecs, false);
-  if (pendingExecs[0] !== "") await datas.bulkEditExecs(pendingExecs, false, true);
-  if (unexecutedExecs[0] !== "") await datas.bulkEditExecs(unexecutedExecs, false, false, true);
+  if (passedExecs.length > 0) await datas.bulkEditExecs(passedExecs, true);
+  if (failedExecs.length > 0) await datas.bulkEditExecs(failedExecs, false);
+  if (pendingExecs.length > 0) await datas.bulkEditExecs(pendingExecs, false, true);
+  if (unexecutedExecs.length > 0) await datas.bulkEditExecs(unexecutedExecs, false, false, true);
 
   console.log("Passed", passedExecs);
   console.log("Failed", failedExecs);

@@ -197,47 +197,28 @@ async function createAndAssignExecution(jiraIssueID = "", cycleId, branch, custo
 }
 exports.createAndAssignExecution = createAndAssignExecution;
 async function createExecution(jiraIssueID = "", cycleId = -1, versionID = -1) {
-    let body = {};
-    if (jiraIssueID == "") {
-        console.error("No JIRA ID SET!");
+    if (!jiraIssueID) {
+        throw new Error("No JIRA ID SET!");
     }
-    if (cycleId == -1 && versionID != -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: -1,
-            versionId: versionID,
-            assigneeType: "currentUser",
-        };
-    }
-    if (cycleId == -1 && versionID == -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: -1,
-            versionId: -1,
-            assigneeType: "currentUser",
-        };
-    }
-    if (cycleId != -1 && versionID != -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: cycleId,
-            versionId: versionID,
-            assigneeType: "currentUser",
-        };
-    }
+    const body = {
+        status: { id: -1 },
+        projectId: jiraProjectID,
+        issueId: jiraIssueID,
+        cycleId: cycleId !== undefined ? cycleId : -1,
+        versionId: versionID !== undefined ? versionID : -1,
+        assigneeType: "currentUser",
+    };
     try {
         const data = await apicall.postData(ZephyrApiVersion + "/execution", body);
         const json = JSON.parse(data);
-        return [json["execution"]["id"], cycleId];
+        if (!json?.execution?.id) {
+            throw new Error("Missing execution ID in response");
+        }
+        return [json.execution.id, cycleId];
     }
     catch (err) {
-        console.log("Execution error:", err);
+        console.error("Execution error:", err);
+        throw err;
     }
 }
 exports.createExecution = createExecution;
@@ -324,31 +305,36 @@ console_log = "Passed.") {
 }
 exports.putStepResult = putStepResult;
 async function updateStepResult(obj, issueId, execId) {
-    let data = await apicall.getData(ZephyrApiVersion + "/teststep/" + issueId + "?projectId=" + jiraProjectID);
-    let stepResult = await apicall.getData(ZephyrApiVersion +
-        "/stepresult/search?executionId=" +
-        execId +
-        "&issueId=" +
-        issueId +
-        "&isOrdered=" +
-        true);
-    data = JSON.parse(data);
-    stepResult = JSON.parse(stepResult);
-    let id;
-    let stepResultId;
-    let step = getTestIT(obj["description"]);
-    let console_log = Array.isArray(obj["message"])
-        ? obj["message"].join(" | ")
-        : obj["message"]?.toString() ?? "";
-    let resultOfTest = 1;
-    const passed = obj["passed"];
-    const pending = obj["pending"];
-    const selectedSteps = data.map(({ step }) => step);
-    const selectedStepsIds = data.map(({ id }) => id);
-    if (selectedSteps.includes(step)) {
+    try {
+        let data = await apicall.getData(ZephyrApiVersion + "/teststep/" + issueId + "?projectId=" + jiraProjectID);
+        let stepResult = await apicall.getData(ZephyrApiVersion +
+            "/stepresult/search?executionId=" +
+            execId +
+            "&issueId=" +
+            issueId +
+            "&isOrdered=" +
+            true);
+        data = JSON.parse(data);
+        stepResult = JSON.parse(stepResult);
+        const step = getTestIT(obj["description"]);
+        const console_log = Array.isArray(obj["message"])
+            ? obj["message"].join(" | ")
+            : obj["message"]?.toString() ?? "";
+        let resultOfTest = 1;
+        const passed = obj["passed"];
+        const pending = obj["pending"];
+        const selectedSteps = data.map(({ step }) => step);
+        const selectedStepsIds = data.map(({ id }) => id);
         const indexOfStep = selectedSteps.indexOf(step);
-        id = selectedStepsIds[indexOfStep];
-        stepResultId = stepResult.stepResults[indexOfStep]["id"];
+        if (indexOfStep === -1) {
+            console.error("Step not matched:", step);
+            return;
+        }
+        const stepResultId = stepResult.stepResults?.[indexOfStep]?.id;
+        if (!stepResultId) {
+            console.error("Missing stepResultId for step:", step);
+            return;
+        }
         if (pending === true) {
             resultOfTest = 3;
         }
@@ -366,8 +352,8 @@ async function updateStepResult(obj, issueId, execId) {
         }
         await putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
     }
-    else {
-        console.error("Not matched it, please compare test it('description') definition and JIRA steps definition!");
+    catch (err) {
+        console.error("updateStepResult error:", err);
     }
 }
 exports.updateStepResult = updateStepResult;
