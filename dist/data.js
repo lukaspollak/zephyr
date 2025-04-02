@@ -197,47 +197,28 @@ async function createAndAssignExecution(jiraIssueID = "", cycleId, branch, custo
 }
 exports.createAndAssignExecution = createAndAssignExecution;
 async function createExecution(jiraIssueID = "", cycleId = -1, versionID = -1) {
-    let body = {};
-    if (jiraIssueID == "") {
-        console.error("No JIRA ID SET!");
-    }
-    if (cycleId == -1 && versionID != -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: -1,
-            versionId: versionID,
-            assigneeType: "currentUser",
-        };
-    }
-    if (cycleId == -1 && versionID == -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: -1,
-            versionId: -1,
-            assigneeType: "currentUser",
-        };
-    }
-    if (cycleId != -1 && versionID != -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: cycleId,
-            versionId: versionID,
-            assigneeType: "currentUser",
-        };
-    }
+    if (!jiraIssueID)
+        throw new Error("No JIRA ID SET!");
+    const body = {
+        status: { id: -1 },
+        projectId: jiraProjectID,
+        issueId: jiraIssueID,
+        cycleId,
+        versionId: versionID,
+        assigneeType: "currentUser",
+    };
     try {
         const data = await apicall.postData(ZephyrApiVersion + "/execution", body);
         const json = JSON.parse(data);
-        return [json["execution"]["id"], cycleId];
+        if (!json?.execution?.id) {
+            console.error("Missing execution ID in response:", json);
+            throw new Error("Missing execution ID in response");
+        }
+        return [json.execution.id, cycleId];
     }
     catch (err) {
-        console.log("Execution error:", err);
+        console.error("Execution error:", err);
+        throw err;
     }
 }
 exports.createExecution = createExecution;
