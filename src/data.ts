@@ -14,6 +14,20 @@ if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
   testFolder = configZephyr.zephyrDefaultOptions.reportsDir + "/";
 }
 
+async function retry<T>(fn: () => Promise<T>, retries = 3, delay = 5000): Promise<T> {
+  try {
+    return await fn();
+  } catch (e: any) {
+    if (retries <= 0) throw e;
+    if (e?.message?.includes("Rate limit exceeded")) {
+      console.warn(`Rate limit hit. Retrying in ${delay}ms...`);
+      await new Promise(res => setTimeout(res, delay));
+      return retry(fn, retries - 1, delay);
+    }
+    throw e;
+  }
+}
+
 export function getTestIT(description: String) {
   const start_pos = 0;
   const start_pos1 = description.indexOf("|");
@@ -159,8 +173,17 @@ export async function getCycleId(
               projectId
           );
           const cycleJSON = JSON.parse(response);
+
+          if (!cycleJSON || !Array.isArray(cycleJSON)) {
+            console.error("Unexpected response for cycles!");
+            return -1;
+          }
+
           for (let i in cycleJSON) {
-            if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
+            const name = cycleJSON[i]?.name;
+            if (!name) continue;
+
+            if (name.toLowerCase() === cycleName.toLowerCase()) {
               cycle_id = cycleJSON[i].id;
               return cycle_id;
             }
@@ -179,7 +202,6 @@ export async function getCycleId(
   } else {
     cycle_id = current_used_cycle_id;
   }
-  // console.log(cycle_id);
   return cycle_id;
 }
 
@@ -230,49 +252,52 @@ export async function createExecution(
   cycleId: any = -1,
   versionID: any = -1
 ) {
-  let body: Object = {};
-  if (jiraIssueID == "") {
-    console.error("No JIRA ID SET!");
-  }
-  if (cycleId == -1 && versionID != -1) {
-    body = {
-      status: { id: -1 },
-      projectId: jiraProjectID,
-      issueId: jiraIssueID,
-      cycleId: -1,
-      versionId: versionID,
-      assigneeType: "currentUser",
-    };
-  }
-  if (cycleId == -1 && versionID == -1) {
-    body = {
-      status: { id: -1 },
-      projectId: jiraProjectID,
-      issueId: jiraIssueID,
-      cycleId: -1,
-      versionId: -1,
-      assigneeType: "currentUser",
-    };
-  }
-  if (cycleId != -1 && versionID != -1) {
-    body = {
-      status: { id: -1 },
-      projectId: jiraProjectID,
-      issueId: jiraIssueID,
-      cycleId: cycleId,
-      versionId: versionID,
-      assigneeType: "currentUser",
-    };
+  if (!jiraIssueID) throw new Error("No JIRA ID SET!");
+
+  const body = {
+    status: { id: -1 },
+    projectId: jiraProjectID,
+    issueId: jiraIssueID,
+    cycleId,
+    versionId: versionID,
+    assigneeType: "currentUser",
+  };
+
+  async function execWithRetry(retries = 5): Promise<[string, any]> {
+    const data = await apicall.postData(ZephyrApiVersion + "/execution", body);
+    let json: any;
+
+    try {
+      json = JSON.parse(data);
+    } catch (err) {
+      throw new Error("Failed to parse Zephyr response.");
+    }
+
+    // detect rate limit
+    if (json?.error === "Rate limit exceeded") {
+      const waitMatch = json.message?.match(/(\d+)\s*seconds/);
+      const waitTime = waitMatch ? parseInt(waitMatch[1]) * 1000 : 5000;
+
+      if (retries > 0) {
+        console.warn(`Rate limited. Retrying after ${waitTime} ms...`);
+        await new Promise((res) => setTimeout(res, waitTime));
+        return await execWithRetry(retries - 1);
+      } else {
+        throw new Error("Exceeded retry attempts due to rate limiting.");
+      }
+    }
+
+    if (!json?.execution?.id) {
+      console.error("Missing execution ID in response:", json);
+      throw new Error("Missing execution ID in response");
+    }
+
+    return [json.execution.id, cycleId];
   }
 
-  try {
-    const data = await apicall.postData(ZephyrApiVersion + "/execution", body);
-    const json = JSON.parse(data);
-    return [json["execution"]["id"], cycleId];
-  } catch (err) {
-    console.log("Execution error:", err);
-  }
+  return await execWithRetry();
 }
+
 
 // createExecution('24452','4c544096-cb8a-4d5f-9030-a31ae60e44a6','10737');
 
@@ -283,9 +308,8 @@ export async function bulkEditExecs(
   unexecuted: boolean = false
 ) {
   let body: any;
-  if (unexecuted == true) {
-    status = null;
-    pending = null;
+
+  if (unexecuted === true) {
     body = {
       executions: execs,
       status: -1,
@@ -293,8 +317,7 @@ export async function bulkEditExecs(
       testStepStatusChangeFlag: false,
       stepStatus: -1,
     };
-  }
-  if (status == true && pending == false) {
+  } else if (status === true && !pending) {
     body = {
       executions: execs,
       status: 1,
@@ -302,25 +325,27 @@ export async function bulkEditExecs(
       testStepStatusChangeFlag: true,
       stepStatus: 1,
     };
-  } else if (status == false && pending == false) {
+  } else if (status === false && !pending) {
     body = {
       executions: execs,
       status: 2,
       clearDefectMappingFlag: false,
-      testStepStatusChangeFlag: false,
+      testStepStatusChangeFlag: false, 
       stepStatus: -1,
     };
-  } else if (status == false && pending == true) {
+  } else if (status === false && pending) {
     body = {
       executions: execs,
       status: 3,
       clearDefectMappingFlag: false,
       testStepStatusChangeFlag: false,
-      stepStatus: 3,
+      stepStatus: -1,
     };
   }
+
   await apicall.postData(ZephyrApiVersion + "/executions", body);
 }
+
 
 export async function bulkEditSteps(exec: string, status: boolean) {
   let body: any;
@@ -349,7 +374,7 @@ export async function putStepResult(
   execId: string,
   issueId: string,
   stepResultId: string,
-  resultOfTest: string,
+  resultOfTest: number,
   console_log: string = "Passed."
 ) {
   const body = {
@@ -358,153 +383,177 @@ export async function putStepResult(
     comment: console_log,
     status: { id: resultOfTest, description: console_log },
   };
-  await new Promise<any>((resolve) => {
-    try {
-      apicall
-        .putData(ZephyrApiVersion + "/stepresult/" + stepResultId, body)
-        .then(function (response: any) {
-          resolve(response);
-        });
-    } catch (err) {
-      console.error(err);
-    }
-  });
+
+  const fn = async () =>
+    await apicall.putData(
+      ZephyrApiVersion + "/stepresult/" + stepResultId,
+      body
+    );
+
+  await retry(fn);
 }
+
 
 export async function updateStepResult(
   obj: any,
   issueId: string,
   execId: string
 ) {
-  let data = await apicall.getData(
+  let dataRaw = await apicall.getData(
     ZephyrApiVersion + "/teststep/" + issueId + "?projectId=" + jiraProjectID
   );
-  let stepResult = await apicall.getData(
+  let stepResultRaw = await apicall.getData(
     ZephyrApiVersion +
       "/stepresult/search?executionId=" +
       execId +
       "&issueId=" +
       issueId +
-      "&isOrdered=" +
-      true
+      "&isOrdered=true"
   );
 
-  data = JSON.parse(data);
-  stepResult = JSON.parse(stepResult);
+  let data, stepResult;
+  try {
+    data = JSON.parse(dataRaw);
+    stepResult = JSON.parse(stepResultRaw);
+  } catch (err) {
+    console.error("Failed to parse step data or results:", err);
+    return;
+  }
 
-  let id: string;
-  let stepResultId: string;
-  let step: string = getTestIT(obj["description"]);
-  let console_log: string = obj["message"].toString();
-  let resultOfTest: number = 1;
+  const stepName = getTestIT(obj["description"]);
+  const console_log: string = Array.isArray(obj["message"])
+    ? obj["message"].join(" | ")
+    : obj["message"]?.toString() ?? "";
 
   const passed = obj["passed"];
   const pending = obj["pending"];
   const selectedSteps = data.map(({ step }) => step);
   const selectedStepsIds = data.map(({ id }) => id);
 
-  if (selectedSteps.includes(step)) {
-    const indexOfStep = selectedSteps.indexOf(step);
-    id = selectedStepsIds[indexOfStep];
-    // let stepId = stepResult.stepResults[indexOfStep]['stepId'];
-    stepResultId = stepResult.stepResults[indexOfStep]["id"];
+  console.log("Looking for step:", stepName);
+  console.log("Available JIRA steps:", selectedSteps);
 
-    // console.log("Issue id:", issueId);
-    // console.log("It Description:", step);
-    // console.log("Console message:", console_log);
+  const indexOfStep = selectedSteps.indexOf(stepName);
+  if (indexOfStep === -1) {
+    console.error("Not matched step: check test description vs JIRA steps!");
+    return;
+  }
 
-    if (pending == true) {
-      resultOfTest = 3;
-    } else if (pending == false) {
-      if (passed == true) {
-        resultOfTest = 1;
-      } else if (passed == false) {
-        resultOfTest = 2;
-      }
+  const stepResultItem = stepResult?.stepResults?.[indexOfStep];
+  if (!stepResultItem) {
+    console.error(`stepResult is undefined at index ${indexOfStep}`);
+    return;
+  }
+
+  const stepResultId = stepResultItem.id;
+
+  let resultOfTest: number;
+  if (pending === true) {
+    resultOfTest = 3;
+  } else if (passed === true) {
+    if (
+      console_log.includes("screenshot did not match") ||
+      console_log.includes("Expected")
+    ) {
+      resultOfTest = 2;
+    } else {
+      resultOfTest = 1;
     }
-
-    await this.putStepResult(
-      execId,
-      issueId,
-      stepResultId,
-      resultOfTest,
-      console_log
-    );
   } else {
-    console.error(
-      "Not matched it, please compare test it('description') definition and JIRA steps definition!"
-    );
+    resultOfTest = 2;
   }
+
+  await putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
 }
 
-export async function execs(path: string = testFolder) {
-  let i = 0;
-  async function getFiles() {
-    return new Promise<any>((resolve) => {
-      fs.readdir(testFolder, async (err: any, files: any[]) => {
-        resolve(files);
-      });
+
+export async function execs(path: string = testFolder): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    fs.readdir(path, (err, files) => {
+      if (err) return reject(err);
+      resolve(files);
     });
-  }
-  const res = await getFiles().then(function (result: any) {
-    return result;
   });
-  return res;
 }
+
 
 export async function getFilesData(path: string = testFolder) {
-  const res = await execs();
-  let i: number = 0;
-  let j: number = 0;
-  let data: Array<string> = [];
-  let crosids: Array<string> = [];
-  async function getJson(file: any) {
-    return await new Promise<any>((resolve) => {
-      fs.readFile(path + file, "utf8", async function (err: any, data: any) {
-        resolve(data);
+  const files = await execs(path);
+  let data: string[] = [];
+  let crosids: string[] = [];
+
+  function getJson(file: string) {
+    return new Promise<string>((resolve, reject) => {
+      fs.readFile(path + file, "utf8", (err, data) => {
+        if (err) reject(err);
+        else resolve(data);
       });
     });
   }
-  const resJson = await getJson(res).then(function (result: any) {
-    return result;
-  });
 
-  while (i < res.length) {
-    data[i] = await getJson(res[i]).then(function (result: any) {
-      const obj = JSON.parse(result);
-      crosids[i] = getTestId(obj["description"]);
-      i = i + 1;
-      return result;
-    });
+  for (let i = 0; i < files.length; i++) {
+    try {
+      const content = await getJson(files[i]);
+      const json = JSON.parse(content);
+
+      if (!json.suites || !Array.isArray(json.suites)) continue;
+
+      for (const suite of json.suites) {
+        const description = suite.name || "";
+        const testId = getTestId(description);
+
+        if (!testId) {
+          console.warn(`Skipped file ${files[i]}: could not extract testId from suite name '${suite.name}'`);
+          continue;
+        }
+
+        if (!suite.tests || !Array.isArray(suite.tests)) continue;
+
+        for (const test of suite.tests) {
+          if (!test.name) continue;
+
+          test.suiteName = suite.name;
+          test.description = `${test.name} | ${testId}`; // ensure description includes identifier
+
+          data.push(JSON.stringify(test));
+          crosids.push(testId);
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to parse file ${files[i]}:`, err);
+      continue;
+    }
   }
+
   return [data, crosids];
 }
+
 
 export async function updateJiraIssueStatus(
   issueCrosID: string,
   status: number
-) {
-  let body: any;
-  const urlParams = "issue/" + issueCrosID + "/transitions";
+): Promise<boolean> {
+  const transitionMap: Record<number, string> = {
+    1: "51", // passed
+    0: "41", // fail
+    2: "91", // skipped
+  };
 
-  // passed
-  if (status == 1) {
-    body = { transition: { id: "51" } };
+  const transitionId = transitionMap[status];
+  if (!transitionId) {
+    console.error(`Invalid status: ${status}`);
+    return false;
   }
-  // fail
-  if (status == 0) {
-    body = { transition: { id: "41" } };
-  }
-  // skipped
-  if (status == 2) {
-    body = { transition: { id: "91" } };
-  }
+
+  const body = { transition: { id: transitionId } };
+  const urlParams = `issue/${issueCrosID}/transitions`;
 
   try {
     await apicall.postJiraData(urlParams, body);
     return true;
-  } catch {
-    console.error("Status of Jira issue is not updated!");
+  } catch (e) {
+    console.error("Status of Jira issue is not updated!", e);
     return false;
   }
 }
+

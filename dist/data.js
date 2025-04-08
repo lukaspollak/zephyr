@@ -15,6 +15,21 @@ let testFolder = "../reports/jsons/";
 if (configZephyr.zephyrDefaultOptions.reportsDir != null) {
     testFolder = configZephyr.zephyrDefaultOptions.reportsDir + "/";
 }
+async function retry(fn, retries = 3, delay = 5000) {
+    try {
+        return await fn();
+    }
+    catch (e) {
+        if (retries <= 0)
+            throw e;
+        if (e?.message?.includes("Rate limit exceeded")) {
+            console.warn(`Rate limit hit. Retrying in ${delay}ms...`);
+            await new Promise(res => setTimeout(res, delay));
+            return retry(fn, retries - 1, delay);
+        }
+        throw e;
+    }
+}
 function getTestIT(description) {
     const start_pos = 0;
     const start_pos1 = description.indexOf("|");
@@ -133,8 +148,15 @@ async function getCycleId(branch, cycleName = "", skip_duplicity_verify = false,
                         "projectId=" +
                         projectId);
                     const cycleJSON = JSON.parse(response);
+                    if (!cycleJSON || !Array.isArray(cycleJSON)) {
+                        console.error("Unexpected response for cycles!");
+                        return -1;
+                    }
                     for (let i in cycleJSON) {
-                        if (cycleJSON[i].name.toLowerCase() === cycleName.toLowerCase()) {
+                        const name = cycleJSON[i]?.name;
+                        if (!name)
+                            continue;
+                        if (name.toLowerCase() === cycleName.toLowerCase()) {
                             cycle_id = cycleJSON[i].id;
                             return cycle_id;
                         }
@@ -156,7 +178,6 @@ async function getCycleId(branch, cycleName = "", skip_duplicity_verify = false,
     else {
         cycle_id = current_used_cycle_id;
     }
-    // console.log(cycle_id);
     return cycle_id;
 }
 exports.getCycleId = getCycleId;
@@ -191,56 +212,51 @@ async function createAndAssignExecution(jiraIssueID = "", cycleId, branch, custo
 }
 exports.createAndAssignExecution = createAndAssignExecution;
 async function createExecution(jiraIssueID = "", cycleId = -1, versionID = -1) {
-    let body = {};
-    if (jiraIssueID == "") {
-        console.error("No JIRA ID SET!");
-    }
-    if (cycleId == -1 && versionID != -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: -1,
-            versionId: versionID,
-            assigneeType: "currentUser",
-        };
-    }
-    if (cycleId == -1 && versionID == -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: -1,
-            versionId: -1,
-            assigneeType: "currentUser",
-        };
-    }
-    if (cycleId != -1 && versionID != -1) {
-        body = {
-            status: { id: -1 },
-            projectId: jiraProjectID,
-            issueId: jiraIssueID,
-            cycleId: cycleId,
-            versionId: versionID,
-            assigneeType: "currentUser",
-        };
-    }
-    try {
+    if (!jiraIssueID)
+        throw new Error("No JIRA ID SET!");
+    const body = {
+        status: { id: -1 },
+        projectId: jiraProjectID,
+        issueId: jiraIssueID,
+        cycleId,
+        versionId: versionID,
+        assigneeType: "currentUser",
+    };
+    async function execWithRetry(retries = 5) {
         const data = await apicall.postData(ZephyrApiVersion + "/execution", body);
-        const json = JSON.parse(data);
-        return [json["execution"]["id"], cycleId];
+        let json;
+        try {
+            json = JSON.parse(data);
+        }
+        catch (err) {
+            throw new Error("Failed to parse Zephyr response.");
+        }
+        // detect rate limit
+        if (json?.error === "Rate limit exceeded") {
+            const waitMatch = json.message?.match(/(\d+)\s*seconds/);
+            const waitTime = waitMatch ? parseInt(waitMatch[1]) * 1000 : 5000;
+            if (retries > 0) {
+                console.warn(`Rate limited. Retrying after ${waitTime} ms...`);
+                await new Promise((res) => setTimeout(res, waitTime));
+                return await execWithRetry(retries - 1);
+            }
+            else {
+                throw new Error("Exceeded retry attempts due to rate limiting.");
+            }
+        }
+        if (!json?.execution?.id) {
+            console.error("Missing execution ID in response:", json);
+            throw new Error("Missing execution ID in response");
+        }
+        return [json.execution.id, cycleId];
     }
-    catch (err) {
-        console.log("Execution error:", err);
-    }
+    return await execWithRetry();
 }
 exports.createExecution = createExecution;
 // createExecution('24452','4c544096-cb8a-4d5f-9030-a31ae60e44a6','10737');
 async function bulkEditExecs(execs, status, pending = false, unexecuted = false) {
     let body;
-    if (unexecuted == true) {
-        status = null;
-        pending = null;
+    if (unexecuted === true) {
         body = {
             executions: execs,
             status: -1,
@@ -249,7 +265,7 @@ async function bulkEditExecs(execs, status, pending = false, unexecuted = false)
             stepStatus: -1,
         };
     }
-    if (status == true && pending == false) {
+    else if (status === true && !pending) {
         body = {
             executions: execs,
             status: 1,
@@ -258,7 +274,7 @@ async function bulkEditExecs(execs, status, pending = false, unexecuted = false)
             stepStatus: 1,
         };
     }
-    else if (status == false && pending == false) {
+    else if (status === false && !pending) {
         body = {
             executions: execs,
             status: 2,
@@ -267,13 +283,13 @@ async function bulkEditExecs(execs, status, pending = false, unexecuted = false)
             stepStatus: -1,
         };
     }
-    else if (status == false && pending == true) {
+    else if (status === false && pending) {
         body = {
             executions: execs,
             status: 3,
             clearDefectMappingFlag: false,
             testStepStatusChangeFlag: false,
-            stepStatus: 3,
+            stepStatus: -1,
         };
     }
     await apicall.postData(ZephyrApiVersion + "/executions", body);
@@ -310,129 +326,143 @@ async function putStepResult(execId, issueId, stepResultId, resultOfTest, consol
         comment: console_log,
         status: { id: resultOfTest, description: console_log },
     };
-    await new Promise((resolve) => {
-        try {
-            apicall
-                .putData(ZephyrApiVersion + "/stepresult/" + stepResultId, body)
-                .then(function (response) {
-                resolve(response);
-            });
-        }
-        catch (err) {
-            console.error(err);
-        }
-    });
+    const fn = async () => await apicall.putData(ZephyrApiVersion + "/stepresult/" + stepResultId, body);
+    await retry(fn);
 }
 exports.putStepResult = putStepResult;
 async function updateStepResult(obj, issueId, execId) {
-    let data = await apicall.getData(ZephyrApiVersion + "/teststep/" + issueId + "?projectId=" + jiraProjectID);
-    let stepResult = await apicall.getData(ZephyrApiVersion +
+    let dataRaw = await apicall.getData(ZephyrApiVersion + "/teststep/" + issueId + "?projectId=" + jiraProjectID);
+    let stepResultRaw = await apicall.getData(ZephyrApiVersion +
         "/stepresult/search?executionId=" +
         execId +
         "&issueId=" +
         issueId +
-        "&isOrdered=" +
-        true);
-    data = JSON.parse(data);
-    stepResult = JSON.parse(stepResult);
-    let id;
-    let stepResultId;
-    let step = getTestIT(obj["description"]);
-    let console_log = obj["message"].toString();
-    let resultOfTest = 1;
+        "&isOrdered=true");
+    let data, stepResult;
+    try {
+        data = JSON.parse(dataRaw);
+        stepResult = JSON.parse(stepResultRaw);
+    }
+    catch (err) {
+        console.error("Failed to parse step data or results:", err);
+        return;
+    }
+    const stepName = getTestIT(obj["description"]);
+    const console_log = Array.isArray(obj["message"])
+        ? obj["message"].join(" | ")
+        : obj["message"]?.toString() ?? "";
     const passed = obj["passed"];
     const pending = obj["pending"];
     const selectedSteps = data.map(({ step }) => step);
     const selectedStepsIds = data.map(({ id }) => id);
-    if (selectedSteps.includes(step)) {
-        const indexOfStep = selectedSteps.indexOf(step);
-        id = selectedStepsIds[indexOfStep];
-        // let stepId = stepResult.stepResults[indexOfStep]['stepId'];
-        stepResultId = stepResult.stepResults[indexOfStep]["id"];
-        // console.log("Issue id:", issueId);
-        // console.log("It Description:", step);
-        // console.log("Console message:", console_log);
-        if (pending == true) {
-            resultOfTest = 3;
+    console.log("Looking for step:", stepName);
+    console.log("Available JIRA steps:", selectedSteps);
+    const indexOfStep = selectedSteps.indexOf(stepName);
+    if (indexOfStep === -1) {
+        console.error("Not matched step: check test description vs JIRA steps!");
+        return;
+    }
+    const stepResultItem = stepResult?.stepResults?.[indexOfStep];
+    if (!stepResultItem) {
+        console.error(`stepResult is undefined at index ${indexOfStep}`);
+        return;
+    }
+    const stepResultId = stepResultItem.id;
+    let resultOfTest;
+    if (pending === true) {
+        resultOfTest = 3;
+    }
+    else if (passed === true) {
+        if (console_log.includes("screenshot did not match") ||
+            console_log.includes("Expected")) {
+            resultOfTest = 2;
         }
-        else if (pending == false) {
-            if (passed == true) {
-                resultOfTest = 1;
-            }
-            else if (passed == false) {
-                resultOfTest = 2;
-            }
+        else {
+            resultOfTest = 1;
         }
-        await this.putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
     }
     else {
-        console.error("Not matched it, please compare test it('description') definition and JIRA steps definition!");
+        resultOfTest = 2;
     }
+    await putStepResult(execId, issueId, stepResultId, resultOfTest, console_log);
 }
 exports.updateStepResult = updateStepResult;
 async function execs(path = testFolder) {
-    let i = 0;
-    async function getFiles() {
-        return new Promise((resolve) => {
-            fs.readdir(testFolder, async (err, files) => {
-                resolve(files);
-            });
+    return new Promise((resolve, reject) => {
+        fs.readdir(path, (err, files) => {
+            if (err)
+                return reject(err);
+            resolve(files);
         });
-    }
-    const res = await getFiles().then(function (result) {
-        return result;
     });
-    return res;
 }
 exports.execs = execs;
 async function getFilesData(path = testFolder) {
-    const res = await execs();
-    let i = 0;
-    let j = 0;
+    const files = await execs(path);
     let data = [];
     let crosids = [];
-    async function getJson(file) {
-        return await new Promise((resolve) => {
-            fs.readFile(path + file, "utf8", async function (err, data) {
-                resolve(data);
+    function getJson(file) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(path + file, "utf8", (err, data) => {
+                if (err)
+                    reject(err);
+                else
+                    resolve(data);
             });
         });
     }
-    const resJson = await getJson(res).then(function (result) {
-        return result;
-    });
-    while (i < res.length) {
-        data[i] = await getJson(res[i]).then(function (result) {
-            const obj = JSON.parse(result);
-            crosids[i] = getTestId(obj["description"]);
-            i = i + 1;
-            return result;
-        });
+    for (let i = 0; i < files.length; i++) {
+        try {
+            const content = await getJson(files[i]);
+            const json = JSON.parse(content);
+            if (!json.suites || !Array.isArray(json.suites))
+                continue;
+            for (const suite of json.suites) {
+                const description = suite.name || "";
+                const testId = getTestId(description);
+                if (!testId) {
+                    console.warn(`Skipped file ${files[i]}: could not extract testId from suite name '${suite.name}'`);
+                    continue;
+                }
+                if (!suite.tests || !Array.isArray(suite.tests))
+                    continue;
+                for (const test of suite.tests) {
+                    if (!test.name)
+                        continue;
+                    test.suiteName = suite.name;
+                    test.description = `${test.name} | ${testId}`; // ensure description includes identifier
+                    data.push(JSON.stringify(test));
+                    crosids.push(testId);
+                }
+            }
+        }
+        catch (err) {
+            console.error(`Failed to parse file ${files[i]}:`, err);
+            continue;
+        }
     }
     return [data, crosids];
 }
 exports.getFilesData = getFilesData;
 async function updateJiraIssueStatus(issueCrosID, status) {
-    let body;
-    const urlParams = "issue/" + issueCrosID + "/transitions";
-    // passed
-    if (status == 1) {
-        body = { transition: { id: "51" } };
+    const transitionMap = {
+        1: "51",
+        0: "41",
+        2: "91", // skipped
+    };
+    const transitionId = transitionMap[status];
+    if (!transitionId) {
+        console.error(`Invalid status: ${status}`);
+        return false;
     }
-    // fail
-    if (status == 0) {
-        body = { transition: { id: "41" } };
-    }
-    // skipped
-    if (status == 2) {
-        body = { transition: { id: "91" } };
-    }
+    const body = { transition: { id: transitionId } };
+    const urlParams = `issue/${issueCrosID}/transitions`;
     try {
         await apicall.postJiraData(urlParams, body);
         return true;
     }
-    catch {
-        console.error("Status of Jira issue is not updated!");
+    catch (e) {
+        console.error("Status of Jira issue is not updated!", e);
         return false;
     }
 }
